@@ -90,8 +90,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://dulichtn.streamlit.app/",       
-        "X-Title": "Chatbot Tay Ninh",
-        "User-Agent": "Mozilla/5.0"
+        "X-Title": "Chatbot Tay Ninh"
     }
 
     payload = {
@@ -137,6 +136,10 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
         partial_text = f"⚠️ Lỗi khi stream: {e}"
         placeholder.markdown(partial_text)
 
+    if partial_text.strip() == "":
+    partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
+
+        
     # LƯU tin nhắn của bot
     st.session_state.messages.append({
         "role": "assistant",
@@ -150,6 +153,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 st.subheader(f"📸 Hình ảnh về {place}")
                 for url in images[place]:
                     st.image(url, use_container_width=True)
+
 
 
 
