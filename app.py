@@ -104,6 +104,37 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
     }
 
     placeholder = st.chat_message("assistant").empty()
+    partial_text = ""
+
+    try:
+        with requests.post(url, headers=headers, json=payload, stream=True) as r:
+            for line in r.iter_lines():
+                if line:
+                    decoded = line.decode("utf-8")
+
+                # Dữ liệu stream luôn bắt đầu bằng "data: ..."
+                    if decoded.startswith("data: "):
+                        data_str = decoded.replace("data: ", "")
+
+                        if data_str == "[DONE]":
+                            break
+
+                        try:
+                            data_json = json.loads(data_str)
+
+                            delta = data_json["choices"][0]["delta"]
+                            if "content" in delta:
+                                partial_text += delta["content"]
+                                placeholder.markdown(partial_text)
+
+                        except:
+                            pass
+
+    except Exception as e:
+        partial_text = f"⚠️ Lỗi khi stream: {e}"
+        placeholder.markdown(partial_text)
+
+    st.session_state.messages.append({"role": "assistant", "content": partial_text})
 
     try:
         response = requests.post(url, headers=headers, json=payload)
@@ -126,3 +157,4 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 st.subheader(f"📸 Hình ảnh về {place}")
                 for url in images[place]:
                     st.image(url, use_container_width=True)
+
