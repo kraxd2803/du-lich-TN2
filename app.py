@@ -137,7 +137,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
         placeholder.markdown(partial_text)
 
     if partial_text.strip() == "":
-    partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
+        partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
 
         
     # LƯU tin nhắn của bot
@@ -153,6 +153,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 st.subheader(f"📸 Hình ảnh về {place}")
                 for url in images[place]:
                     st.image(url, use_container_width=True)
+
 
 
 
