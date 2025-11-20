@@ -94,7 +94,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
         "User-Agent": "Mozilla/5.0"
     }
 
-     payload = {
+    payload = {
         "model": "deepseek/deepseek-chat",
         "messages": [
             {"role": "system", "content": "Bạn là hướng dẫn viên du lịch Tây Ninh."},
@@ -150,6 +150,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 st.subheader(f"📸 Hình ảnh về {place}")
                 for url in images[place]:
                     st.image(url, use_container_width=True)
+
 
 
 
