@@ -94,15 +94,17 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
         "User-Agent": "Mozilla/5.0"
     }
 
-    payload = {
+ payload = {
         "model": "deepseek/deepseek-chat",
         "messages": [
             {"role": "system", "content": "Bạn là hướng dẫn viên du lịch Tây Ninh."},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.4
+        "temperature": 0.4,
+        "stream": True     # 🔥 BẮT BUỘC để nhận text từng phần
     }
 
+    # Tạo khung chat cho bot
     placeholder = st.chat_message("assistant").empty()
     partial_text = ""
 
@@ -130,16 +132,17 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
 
                     except:
                         pass
-    
+
     except Exception as e:
         partial_text = f"⚠️ Lỗi khi stream: {e}"
         placeholder.markdown(partial_text)
 
-        st.session_state.messages.append({
+    # LƯU tin nhắn của bot
+    st.session_state.messages.append({
         "role": "assistant",
         "content": partial_text
     })
- 
+
 
     for place in tourism_data.keys():
         if place.lower() in user_input.lower():
@@ -147,5 +150,6 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 st.subheader(f"📸 Hình ảnh về {place}")
                 for url in images[place]:
                     st.image(url, use_container_width=True)
+
 
 
