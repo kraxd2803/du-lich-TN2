@@ -104,21 +104,46 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
     }
 
     placeholder = st.chat_message("assistant").empty()
+    partial_text = ""
 
     try:
-        response = requests.post(url, headers=headers, json=payload)
-        data = response.json()
+        with requests.post(url, headers=headers, json=payload, stream=True, timeout=30) as r:
+            for line in r.iter_lines():
+                if not line:
+                    continue
 
-        if "error" in data:
-            raise Exception(data["error"]["message"])
+                decoded = line.decode("utf-8")
 
-        reply = data["choices"][0]["message"]["content"]
+                if decoded.startswith("data: "):
+                    data_str = decoded.replace("data: ", "")
+
+                    if data_str == "[DONE]":
+                        break
+
+                    try:
+                        data_json = json.loads(data_str)
+                        delta = data_json["choices"][0]["delta"]
+
+                        if "content" in delta:
+                            partial_text += delta["content"]
+                            placeholder.markdown(partial_text)
+
+                    except:
+                        pass
 
     except Exception as e:
-        reply = f"⚠️ Lỗi khi gọi OpenRouter: {e}"
+        partial_text = f"⚠️ Lỗi khi stream: {e}"
+        placeholder.markdown(partial_text)
 
-    placeholder.markdown(reply)
-    st.session_state.messages.append({"role": "assistant", "content": reply})
+    # Nếu không nhận được gì thì cảnh báo
+    if partial_text.strip() == "":
+        partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
+
+    # Lưu tin nhắn của bot
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": partial_text
+    })
 
     for place in tourism_data.keys():
         if place.lower() in user_input.lower():
@@ -126,6 +151,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 st.subheader(f"📸 Hình ảnh về {place}")
                 for url in images[place]:
                     st.image(url, use_container_width=True)
+
 
 
 
