@@ -109,47 +109,37 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
     try:
         with requests.post(url, headers=headers, json=payload, stream=True) as r:
             for line in r.iter_lines():
-                if line:
-                    decoded = line.decode("utf-8")
+                if not line:
+                    continue
 
-                # Dữ liệu stream luôn bắt đầu bằng "data: ..."
-                    if decoded.startswith("data: "):
-                        data_str = decoded.replace("data: ", "")
+                decoded = line.decode("utf-8")
 
-                        if data_str == "[DONE]":
-                            break
+                if decoded.startswith("data: "):
+                    data_str = decoded.replace("data: ", "")
 
-                        try:
-                            data_json = json.loads(data_str)
+                    if data_str == "[DONE]":
+                        break
 
-                            delta = data_json["choices"][0]["delta"]
-                            if "content" in delta:
-                                partial_text += delta["content"]
-                                placeholder.markdown(partial_text)
+                    try:
+                        data_json = json.loads(data_str)
+                        delta = data_json["choices"][0]["delta"]
 
-                        except:
-                            pass
+                        if "content" in delta:
+                            partial_text += delta["content"]
+                            placeholder.markdown(partial_text)
 
+                    except:
+                        pass
+    
     except Exception as e:
         partial_text = f"⚠️ Lỗi khi stream: {e}"
         placeholder.markdown(partial_text)
 
-    st.session_state.messages.append({"role": "assistant", "content": partial_text})
-
-    try:
-        response = requests.post(url, headers=headers, json=payload)
-        data = response.json()
-
-        if "error" in data:
-            raise Exception(data["error"]["message"])
-
-        reply = data["choices"][0]["message"]["content"]
-
-    except Exception as e:
-        reply = f"⚠️ Lỗi khi gọi OpenRouter: {e}"
-
-    placeholder.markdown(reply)
-    st.session_state.messages.append({"role": "assistant", "content": reply})
+        st.session_state.messages.append({
+        "role": "assistant",
+        "content": partial_text
+    })
+ 
 
     for place in tourism_data.keys():
         if place.lower() in user_input.lower():
@@ -157,4 +147,5 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 st.subheader(f"📸 Hình ảnh về {place}")
                 for url in images[place]:
                     st.image(url, use_container_width=True)
+
 
