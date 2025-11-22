@@ -66,7 +66,7 @@ if user_input:
     # ======================================
     st.write("💡 Đang suy nghĩ...")
     prompt = f"""
-Bạn là hướng dẫn viên du lịch Tây Ninh.
+Bạn là hướng dẫn viên du lịch Tây Ninh mới bao gồm cả tỉnh Long An cũ sau sáp nhập .
 
 Người dùng hỏi: "{user_input}"
 
@@ -194,6 +194,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
         
+
 
 
 
