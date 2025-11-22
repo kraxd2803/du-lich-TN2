@@ -152,6 +152,50 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
                 for url in images[place]:
                     st.image(url, use_container_width=True)
 
+    def get_weather_simple(lat, lon):
+        url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}"
+            "&current_weather=true"
+            "&hourly=precipitation_probability"
+            "&timezone=auto"
+        )
+        try:
+            res = requests.get(url)
+            return res.json()
+        except:
+            return None
+
+    st.subheader("🌤️ Thời tiết hiện tại tại Tây Ninh")
+
+# Toạ độ Tây Ninh
+    lat, lon = 10.5359,106.4137
+
+    weather = get_weather_simple(lat, lon)
+
+    if weather:
+        current = weather.get("current_weather", {})
+        temp = current.get("temperature", "?")
+        time = current.get("time", "?")
+
+    # Khả năng mưa (lấy giờ đầu tiên)
+        rain_prob = weather.get("hourly", {}).get("precipitation_probability", ["?"])[0]
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("🌡️ Nhiệt độ", f"{temp}°C")
+
+        with col2:
+            st.metric("🌧️ Khả năng mưa", f"{rain_prob}%")
+
+        st.caption(f"⏱️ Cập nhật lúc: {time}")
+
+    else:
+        st.error("⚠️ Không thể tải dữ liệu thời tiết!")
+        
+
+
 
 
 
