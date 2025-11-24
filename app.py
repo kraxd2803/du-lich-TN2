@@ -75,8 +75,8 @@ Dữ liệu du lịch:
 {json.dumps(tourism_data, ensure_ascii=False, indent=2)}
 ---
 
-❗ Chỉ trả lời dựa trên dữ liệu, không tự bịa thêm.
-Hãy trả lời tự nhiên, thân thiện, chính xác.
+❗ Trả lời phần lớn dựa trên dữ liệu, có thể kết hợp với thông tin của bạn nhưng phải đảm bảo đó là thông tin chính xác tuyệt đối , không tự bịa thêm.
+Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng tiếng việt.
     """
 
     # ======================================
@@ -194,6 +194,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác.
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
         
+
 
 
 
