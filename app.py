@@ -44,7 +44,6 @@ for line in raw_text.splitlines():
 st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="🗺️")
 st.title("🗺️ Chatbot Du Lịch Tây Ninh – BETA Version")
 st.caption("Made by Đăng Khoa 🔰 - 1.0")
-st.image("huong_dan.png", caption="Hướng dẫn sử dụng Chatbot", use_container_width=True)
 
 
 if "messages" not in st.session_state:
@@ -196,6 +195,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
         
+
 
 
 
