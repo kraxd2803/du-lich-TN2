@@ -105,7 +105,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.4,
-        "stream": False
+        "stream": True
     }
 
     placeholder = st.chat_message("assistant").empty()
@@ -143,6 +143,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
     # Nếu không nhận được gì thì cảnh báo
     if partial_text.strip() == "":
         partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
+        st.session_state.messages.pop()
 
     # Lưu tin nhắn của bot
     st.session_state.messages.append({
@@ -199,6 +200,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
         
+
 
 
 
