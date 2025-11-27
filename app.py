@@ -105,7 +105,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.4,
-        "stream": True     # 🔥 BẮT BUỘC để nhận text từng phần
+        "stream": False
     }
 
     placeholder = st.chat_message("assistant").empty()
@@ -199,6 +199,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
         
+
 
 
 
