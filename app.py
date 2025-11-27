@@ -93,7 +93,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://du-lich-tn2-yhnjgcbmxdl9pvtjjmksi4.streamlit.app",       
-        "X-Title": "Chatbot Tay Ninh"
+        "X-Title": "Chatbot Tay Ninh".
         "User-Agent": "OpenRouter-Chatbot/1.0"
 
     }
@@ -199,6 +199,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác , chỉ sử dụng ti�
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
         
+
 
 
 
