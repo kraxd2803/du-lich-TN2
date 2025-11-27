@@ -108,7 +108,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
 
     placeholder = st.chat_message("assistant").empty()
     partial_text = ""
-
+    st.session_state.messages.pop()
     try:
         with requests.post(url, headers=headers, json=payload, stream=True, timeout=30) as r:
             for line in r.iter_lines():
@@ -183,3 +183,4 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
         st.caption(f"⏱️ Cập nhật lúc: {time}")
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
+
