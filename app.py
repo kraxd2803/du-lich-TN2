@@ -97,13 +97,13 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
     }
 
     payload = {
-        "model": "gpt-5-mini",
+        "model": "gpt-4o-mini",
         "messages": [
             {"role": "system", "content": "Bạn là hướng dẫn viên du lịch Tây Ninh."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.4,
-        "stream": True
+        "stream": False
     }
 
     placeholder = st.chat_message("assistant").empty()
@@ -183,4 +183,5 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
         st.caption(f"⏱️ Cập nhật lúc: {time}")
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
+
 
