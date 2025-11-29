@@ -58,15 +58,15 @@ for msg in st.session_state.messages:
 user_input = st.chat_input("Nhập câu hỏi...")
 
 if user_input:
-    # Hiển thị tin nhắn người dùng
+
+    # ⬆️ Lưu tin nhắn user
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
 
     # ======================================
-# 🔍 LỌC DỮ LIỆU LIÊN QUAN
-# ======================================
-
+    # 🔍 LỌC DỮ LIỆU LIÊN QUAN
+    # ======================================
     related_data = ""
 
     for place in tourism_data:
@@ -77,15 +77,13 @@ if user_input:
     if related_data == "":
         related_data = "Không tìm thấy dữ liệu trực tiếp trong kho dữ liệu."
 
-
-    
     # ======================================
     # 🧠 TẠO PROMPT
     # ======================================
     st.write("💡 Đang suy nghĩ...")
 
-    # Giới hạn độ dài prompt để tránh quá dài
     MAX_PROMPT_LENGTH = 3000
+
     full_prompt = f"""
 Bạn là hướng dẫn viên du lịch Tây Ninh mới bao gồm cả tỉnh Long An cũ sau sáp nhập.
 
@@ -96,15 +94,17 @@ Dữ liệu du lịch:
 {related_data}
 ---
 
-❗ Trả lời phần lớn dựa trên dữ liệu, có thể kết hợp với thông tin của bạn nhưng phải đảm bảo đó là thông tin chính xác tuyệt đối, không tự bịa thêm.
-Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng tiếng Việt.
-    """
+❗ Trả lời dựa trên dữ liệu là chính, có thể kết hợp kiến thức ngoài nhưng tuyệt đối không bịa.
+Chỉ trả lời bằng tiếng Việt, giọng thân thiện, chính xác.
+"""
+
     prompt = full_prompt[:MAX_PROMPT_LENGTH]
 
     # ======================================
-    # 🤖 GỌI OPENROUTER GPT-5-MINI
+    # 🤖 GỌI OPENROUTER
     # ======================================
-    OPENROUTER_API_KEY = "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"
+
+    OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
 
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
@@ -121,36 +121,29 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.3,
-        "stream": True
+        "stream": False
     }
 
     placeholder = st.chat_message("assistant").empty()
     partial_text = ""
 
+    # ======================================
+    # 🛰️ GỌI API KHÔNG STREAM (ổn định nhất)
+    # ======================================
     try:
-        with requests.post(url, headers=headers, json=payload, stream=True, timeout=30) as r:
-            for line in r.iter_lines():
-                if not line:
-                    continue
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response_json = response.json()
+        partial_text = response_json["choices"][0]["message"]["content"]
+        placeholder.markdown(partial_text)
 
-                if line.startswith(b"data: "):
-                    data = line.replace(b"data: ", b"")
-                    if data == b"[DONE]":
-                        break
-
-                    chunk = json.loads(data)
-                    delta = chunk["choices"][0]["delta"]
-                    if "content" in delta:
-                        partial_text += delta["content"]
-                        placeholder.markdown(partial_text)
-
-    except:
+    except Exception as e:
         partial_text = ""
-       
 
+    # ======================================
+    # 🔁 FALLBACK nếu phản hồi rỗng
+    # ======================================
     if partial_text.strip() == "":
         try:
-            payload["stream"] = False
             r = requests.post(url, headers=headers, json=payload, timeout=60)
             reply = r.json()["choices"][0]["message"]["content"]
             partial_text = reply
@@ -159,9 +152,15 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
         except:
             partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
             placeholder.markdown(partial_text)
-            st.session_state.messages.pop()  # Xoá câu hỏi lỗi
+            st.session_state.messages.pop()  # Xoá tin nhắn lỗi
             st.stop()
-            
+
+    # Lưu lại phản hồi assistant
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": partial_text
+    })
+
     # ======================================
     # 📸 HIỂN THỊ HÌNH ẢNH LIÊN QUAN
     # ======================================
@@ -170,10 +169,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
             st.subheader(f"📸 Hình ảnh về {place}")
             for url in images[place]:
                 st.image(url, use_container_width=True)
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": partial_text
-    })
+
     # ======================================
     # 🌤️ THỜI TIẾT TÂY NINH
     # ======================================
@@ -199,7 +195,6 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
         temp = current.get("temperature", "?")
         time = current.get("time", "?")
 
-        # Lấy giờ hiện tại để khả năng mưa chính xác
         current_hour = datetime.now().hour
         rain_prob_list = weather.get("hourly", {}).get("precipitation_probability", [0]*24)
         rain_prob = rain_prob_list[current_hour] if current_hour < len(rain_prob_list) else "?"
@@ -212,8 +207,3 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
         st.caption(f"⏱️ Cập nhật lúc: {time}")
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
-
-
-
-
-
