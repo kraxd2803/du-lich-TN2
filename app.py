@@ -64,6 +64,22 @@ if user_input:
         st.markdown(user_input)
 
     # ======================================
+# 🔍 LỌC DỮ LIỆU LIÊN QUAN
+# ======================================
+
+    related_data = ""
+
+    for place in tourism_data:
+        if place.lower() in user_input.lower():
+            related_data = tourism_data[place]
+            break
+
+    if related_data == "":
+        related_data = "Không tìm thấy dữ liệu trực tiếp trong kho dữ liệu."
+
+
+    
+    # ======================================
     # 🧠 TẠO PROMPT
     # ======================================
     st.write("💡 Đang suy nghĩ...")
@@ -77,7 +93,7 @@ Người dùng hỏi: "{user_input}"
 
 Dữ liệu du lịch:
 ---
-{json.dumps(tourism_data, ensure_ascii=False, indent=2)}
+{related_data}
 ---
 
 ❗ Trả lời phần lớn dựa trên dữ liệu, có thể kết hợp với thông tin của bạn nhưng phải đảm bảo đó là thông tin chính xác tuyệt đối, không tự bịa thêm.
@@ -94,6 +110,8 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://du-lich-tn2-yhnjgcbmxdl9pvtjjmksi4.streamlit.app/",
+        "X-Title": "Chatbot Tay Ninh",
     }
 
     payload = {
@@ -102,13 +120,13 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
             {"role": "system", "content": "Bạn là hướng dẫn viên du lịch Tây Ninh."},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.4,
-        "stream": False
+        "temperature": 0.3,
+        "stream": True
     }
 
     placeholder = st.chat_message("assistant").empty()
     partial_text = ""
-    st.session_state.messages.pop()
+
     try:
         with requests.post(url, headers=headers, json=payload, stream=True, timeout=30) as r:
             for line in r.iter_lines():
@@ -117,7 +135,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
                 try:
                     decoded = line.decode("utf-8")
                     if decoded.startswith("data: "):
-                        data_str = decoded.replace("data: ", "")
+                        data_str = decoded.replace("data: ", "").strip()
                         if data_str == "[DONE]":
                             break
                         data_json = json.loads(data_str)
@@ -126,16 +144,25 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
                             partial_text += delta["content"]
                             placeholder.markdown(partial_text)
                 except:
-                    continue
+                    pass
     except Exception as e:
-        partial_text = f"⚠️ Lỗi khi stream: {e}"
-        placeholder.markdown(partial_text)
+        partial_text = f""
+       
 
     if partial_text.strip() == "":
-        partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
+        try:
+            payload["stream"] = False
+            r = requests.post(url, headers=headers, json=payload, timeout=60)
+            reply = r.json()["choices"][0]["message"]["content"]
+            partial_text = reply
+            placeholder.markdown(reply)
 
-    st.session_state.messages.append({"role": "assistant", "content": partial_text})
-
+        except:
+            partial_text = "⚠️ Không nhận được phản hồi từ mô hình!"
+            placeholder.markdown(partial_text)
+            st.session_state.messages.pop()  # Xoá câu hỏi lỗi
+            st.stop()
+            
     # ======================================
     # 📸 HIỂN THỊ HÌNH ẢNH LIÊN QUAN
     # ======================================
@@ -144,7 +171,10 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
             st.subheader(f"📸 Hình ảnh về {place}")
             for url in images[place]:
                 st.image(url, use_container_width=True)
-
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": partial_text
+    })
     # ======================================
     # 🌤️ THỜI TIẾT TÂY NINH
     # ======================================
@@ -183,5 +213,6 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
         st.caption(f"⏱️ Cập nhật lúc: {time}")
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
+
 
 
