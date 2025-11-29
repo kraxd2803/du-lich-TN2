@@ -104,7 +104,7 @@ Chỉ trả lời bằng tiếng Việt, giọng thân thiện, chính xác.
     # 🤖 GỌI OPENROUTER
     # ======================================
 
-    OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
+    OPENROUTER_API_KEY = "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"
 
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
