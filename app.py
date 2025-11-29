@@ -104,11 +104,10 @@ Chỉ trả lời bằng tiếng Việt, giọng thân thiện, chính xác.
     # 🤖 GỌI OPENROUTER
     # ======================================
 
-    OPENROUTER_API_KEY = "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"
-
+    yourapikey = st.secret[YOURAPIKEY]
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Authorization": f"Bearer {yourapikey}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://du-lich-tn2-yhnjgcbmxdl9pvtjjmksi4.streamlit.app/",
         "X-Title": "Chatbot Tay Ninh",
@@ -207,3 +206,4 @@ Chỉ trả lời bằng tiếng Việt, giọng thân thiện, chính xác.
         st.caption(f"⏱️ Cập nhật lúc: {time}")
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
+
