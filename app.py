@@ -115,7 +115,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
     }
 
     payload = {
-        "model": "gpt-4o-mini",
+        "model": "openai/gpt-4.1-mini",
         "messages": [
             {"role": "system", "content": "Bạn là hướng dẫn viên du lịch Tây Ninh."},
             {"role": "user", "content": prompt}
@@ -132,21 +132,20 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
             for line in r.iter_lines():
                 if not line:
                     continue
-                try:
-                    decoded = line.decode("utf-8")
-                    if decoded.startswith("data: "):
-                        data_str = decoded.replace("data: ", "").strip()
-                        if data_str == "[DONE]":
-                            break
-                        data_json = json.loads(data_str)
-                        delta = data_json["choices"][0]["delta"]
-                        if "content" in delta:
-                            partial_text += delta["content"]
-                            placeholder.markdown(partial_text)
-                except:
-                    pass
-    except Exception as e:
-        partial_text = f""
+
+                if line.startswith(b"data: "):
+                    data = line.replace(b"data: ", b"")
+                    if data == b"[DONE]":
+                        break
+
+                    chunk = json.loads(data)
+                    delta = chunk["choices"][0]["delta"]
+                    if "content" in delta:
+                        partial_text += delta["content"]
+                        placeholder.markdown(partial_text)
+
+    except:
+        partial_text = ""
        
 
     if partial_text.strip() == "":
@@ -213,6 +212,7 @@ Hãy trả lời tự nhiên, thân thiện, chính xác, chỉ sử dụng ti�
         st.caption(f"⏱️ Cập nhật lúc: {time}")
     else:
         st.error("⚠️ Không thể tải dữ liệu thời tiết!")
+
 
 
 
