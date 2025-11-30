@@ -169,17 +169,30 @@ if user_input:
                     config={"max_output_tokens": 256}
                 )
                 
-                # Lấy text từ response sync
-                if hasattr(resp, "text") and resp.text:
-                    full_text = resp.text
-                elif hasattr(resp, "candidates") and resp.candidates:
-                     parts = resp.candidates[0].content.parts
-                     full_text = "".join([p.text for p in parts if p.text])
-                else:
-                    full_text = "Không có nội dung trả về."
+                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN (Sửa lỗi TypeError) ---
                 
-                placeholder.markdown(full_text)
+                # 1. Kiểm tra lỗi lọc an toàn
+                if hasattr(resp, "prompt_feedback") and resp.prompt_feedback.block_reason:
+                    full_text = f"🚫 Nội dung bị chặn do vi phạm chính sách an toàn: {resp.prompt_feedback.block_reason.name}"
+                
+                # 2. Nếu không bị chặn, lấy text
+                elif hasattr(resp, "text") and resp.text:
+                    full_text = resp.text
+                
+                # 3. Phân tích cấu trúc sâu hơn (để tương thích rộng hơn, nhưng ít cần thiết hơn với SDK mới)
+                elif hasattr(resp, "candidates") and resp.candidates:
+                    cand = resp.candidates[0]
+                    # Kiểm tra xem content và parts có tồn tại không trước khi truy cập
+                    if hasattr(cand, "content") and cand.content:
+                        parts = getattr(cand.content, "parts", None)
+                        if parts:
+                            full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
+                
+                # 4. Nếu vẫn không có nội dung
+                if not full_text:
+                     full_text = "⚠️ Phản hồi rỗng hoặc không có nội dung liên quan."
 
+                placeholder.markdown(full_text)
             except Exception as e_sync:
                 # C. Cả 2 đều lỗi -> In lỗi chi tiết
                 st.error("❌ Đã xảy ra lỗi kết nối Gemini:")
@@ -218,6 +231,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
