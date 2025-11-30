@@ -132,7 +132,7 @@ if user_input:
             # A. Thử Streaming (Dùng hàm generate_content_stream)
             # LƯU Ý: Đổi tên hàm, bỏ tham số stream=True
             stream = client.models.generate_content_stream(
-                model="gemini-1.5-flash", 
+                model="gemini-2.5-flash", 
                 contents=prompt_user,
             )
 
@@ -163,7 +163,7 @@ if user_input:
             try:
                 # LƯU Ý: Dùng hàm generate_content, KHÔNG truyền stream=False
                 resp = client.models.generate_content(
-                    model="gemini-1.5-flash", 
+                    model="gemini-2.5-flash", 
                     contents=prompt_user,
                 )
                 
@@ -216,6 +216,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
