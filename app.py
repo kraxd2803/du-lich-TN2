@@ -9,7 +9,7 @@ from unidecode import unidecode
 genai.configure(api_key=st.secrets["gemini_key"])
 
 model = genai.GenerativeModel(
-    "gemini-1.5-flash",  # nhanh + rẻ + ổn định
+    "models/gemini-1.5-flash",  # nhanh + rẻ + ổn định
 )
 
 # ======================================
@@ -92,3 +92,4 @@ Tin nhắn user:
     st.session_state.messages.append({"role": "user", "content": user_msg})
     st.session_state.messages.append({"role": "assistant", "content": response})
     st.session_state.last_bot = response
+
