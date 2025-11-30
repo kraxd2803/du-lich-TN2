@@ -199,13 +199,6 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
-    if weather:
-        current = weather.get("current_weather", {})
-        temp = current.get("temperature", "--")
-        
-        with cols_weather[0]:
-            st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
-
 
 
 
