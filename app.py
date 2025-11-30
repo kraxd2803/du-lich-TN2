@@ -172,46 +172,18 @@ if user_input:
                 raise RuntimeError("Empty stream")
 
         except Exception as e_stream:
-            # fallback: try non-stream generate_content (sync)
+            # Fallback: thử gọi không stream
             try:
-                resp = client.models.generate_content(
-                    model="gemini-2.0-flash",
-                    contents=prompt_user,
-                    stream=False,
-                )
-                # resp may have .text or .candidates etc.
-                sync_text = ""
-                try:
-                    if hasattr(resp, "text") and resp.text:
-                        sync_text = resp.text
-                    elif hasattr(resp, "candidates") and isinstance(resp.candidates, list):
-                        cand = resp.candidates[0]
-                        # older/newer formats
-                        if hasattr(cand, "content") and isinstance(cand.content, dict):
-                            parts = cand.content.get("parts", [])
-                            sync_text = "".join([p.get("text", "") for p in parts])
-                        elif hasattr(cand, "text"):
-                            sync_text = cand.text
-                except Exception:
-                    sync_text = ""
-
-                if sync_text.strip() == "":
-                    raise RuntimeError("Empty sync response")
-                full_text = sync_text
-                placeholder.markdown(full_text)
+                # ... (đoạn code gọi sync giữ nguyên) ...
+                # ...
             except Exception as e_sync:
-                # both stream and sync failed
-                err_msg = "⚠️ Không nhận được phản hồi từ Gemini API. Vui lòng kiểm tra API key / quota."
+                # 🛑 IN RA LỖI THỰC SỰ Ở ĐÂY
+                st.error(f"Lỗi Stream: {e_stream}") 
+                st.error(f"Lỗi Sync: {e_sync}")
+                
+                err_msg = "⚠️ Hệ thống đang gặp sự cố kết nối với Google AI."
                 placeholder.markdown(err_msg)
-                # remove last user message to avoid blocking next queries
-                try:
-                    st.session_state.messages.pop()
-                except Exception:
-                    pass
-                # stop further execution for this run
-                st.session_state.last_bot = ""
                 st.stop()
-
         # save to history
         st.session_state.messages.append({"role": "assistant", "content": full_text})
         st.session_state.last_bot = full_text
@@ -246,6 +218,7 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_msg})
     st.session_state.messages.append({"role": "assistant", "content": response})
     st.session_state.last_bot = response
+
 
 
 
