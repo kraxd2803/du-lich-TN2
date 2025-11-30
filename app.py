@@ -122,32 +122,29 @@ if user_input:
     else:
         prompt_user = f"Tiếp tục cuộc trò chuyện. Tin nhắn user: {user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
 
-# 4. Gọi Gemini API (Code đã sửa cho SDK google-genai mới nhất)
+    # 4. Gọi Gemini API (Sửa lỗi 'NoneType' và thêm config token)
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_text = ""
         
+        # Cấu hình Token Output (256 tokens)
+        gemini_config = {"max_output_tokens": 256} 
+
         # --- BẮT ĐẦU GỌI API ---
         try:
-            # A. Thử Streaming (Dùng hàm generate_content_stream)
-            # LƯU Ý: Đổi tên hàm, bỏ tham số stream=True
+            # A. Thử Streaming
             stream = client.models.generate_content_stream(
                 model="gemini-2.5-flash", 
                 contents=prompt_user,
-                config={"max_output_tokens": 256}
+                config=gemini_config # Thêm giới hạn token
             )
 
             for chunk in stream:
                 chunk_text = ""
-                # Xử lý text từ chunk (cấu trúc mới)
+                # Lấy text từ chunk (cấu trúc mới)
                 try:
-                    # Kiểm tra nếu chunk có thuộc tính text trực tiếp
                     if hasattr(chunk, "text") and chunk.text:
                         chunk_text = chunk.text
-                    # Nếu không, kiểm tra trong candidates/parts
-                    elif hasattr(chunk, "candidates") and chunk.candidates:
-                         parts = chunk.candidates[0].content.parts
-                         chunk_text = "".join([p.text for p in parts if p.text])
                 except Exception:
                     pass
                 
@@ -155,44 +152,41 @@ if user_input:
                     full_text += chunk_text
                     placeholder.markdown(full_text)
 
+            # Nếu full_text rỗng sau khi streaming xong, kiểm tra lỗi và raise
             if not full_text.strip():
-                # Nếu stream rỗng, thử fallback
-                raise RuntimeError("Empty stream response")
+                # Dùng lỗi tùy chỉnh để dễ debug hơn
+                raise RuntimeError("Phản hồi rỗng (Có thể bị lọc nội dung).") 
 
         except Exception as e_stream:
             # B. Nếu Stream lỗi -> Fallback sang gọi Sync
             try:
-                # LƯU Ý: Dùng hàm generate_content, KHÔNG truyền stream=False
                 resp = client.models.generate_content(
                     model="gemini-2.5-flash", 
                     contents=prompt_user,
-                    config={"max_output_tokens": 256}
+                    config=gemini_config # Thêm giới hạn token
                 )
                 
-                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN (Sửa lỗi TypeError) ---
+                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN (ĐÃ SỬA LỖI AttributeError) ---
                 
-                # 1. Kiểm tra lỗi lọc an toàn
-                if hasattr(resp, "prompt_feedback") and resp.prompt_feedback.block_reason:
-                    full_text = f"🚫 Nội dung bị chặn do vi phạm chính sách an toàn: {resp.prompt_feedback.block_reason.name}"
+                # 1. KIỂM TRA LỖI LỌC AN TOÀN (Sửa lỗi NoneType)
+                # Kiểm tra cả 2 điều kiện: thuộc tính có tồn tại VÀ nó không phải là None
+                if (hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None and 
+                    hasattr(resp.prompt_feedback, "block_reason") and resp.prompt_feedback.block_reason):
+                    
+                    # Nếu bị chặn, lấy lý do
+                    reason_name = resp.prompt_feedback.block_reason.name if hasattr(resp.prompt_feedback.block_reason, 'name') else 'Lý do không xác định'
+                    full_text = f"🚫 Nội dung bị chặn do vi phạm chính sách an toàn: {reason_name}"
                 
-                # 2. Nếu không bị chặn, lấy text
+                # 2. Nếu không bị chặn, lấy text (Cách đơn giản nhất)
                 elif hasattr(resp, "text") and resp.text:
                     full_text = resp.text
                 
-                # 3. Phân tích cấu trúc sâu hơn (để tương thích rộng hơn, nhưng ít cần thiết hơn với SDK mới)
-                elif hasattr(resp, "candidates") and resp.candidates:
-                    cand = resp.candidates[0]
-                    # Kiểm tra xem content và parts có tồn tại không trước khi truy cập
-                    if hasattr(cand, "content") and cand.content:
-                        parts = getattr(cand.content, "parts", None)
-                        if parts:
-                            full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
-                
-                # 4. Nếu vẫn không có nội dung
+                # 3. Nếu vẫn không có nội dung
                 if not full_text:
                      full_text = "⚠️ Phản hồi rỗng hoặc không có nội dung liên quan."
 
                 placeholder.markdown(full_text)
+
             except Exception as e_sync:
                 # C. Cả 2 đều lỗi -> In lỗi chi tiết
                 st.error("❌ Đã xảy ra lỗi kết nối Gemini:")
@@ -205,7 +199,7 @@ if user_input:
         # 5. Lưu lịch sử
         st.session_state.messages.append({"role": "assistant", "content": full_text})
         st.session_state.last_bot = full_text
-
+        
     # 6. Hiển thị ảnh liên quan (nếu có)
     found_img = False
     for place in tourism_data.keys():
@@ -231,6 +225,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
