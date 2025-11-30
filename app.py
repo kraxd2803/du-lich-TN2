@@ -114,16 +114,22 @@ if user_input:
     if related_data == "":
         related_data = "Không tìm thấy dữ liệu trực tiếp trong kho dữ liệu."
 
-    # 3. Tạo Prompt
+# 3. Tạo Prompt
+    # Tắt RAG hoàn toàn để kiểm tra
+    related_data = "" # Gán related_data về rỗng (để đảm bảo không có gì bị đưa vào)
+
     new_question = is_new_question(user_input, st.session_state.last_bot)
+    
     if new_question:
+        # Giảm nhẹ System Instruction (lh) để model dễ trả lời hơn
         lh = "Bạn là chatbot du lịch tỉnh Tây Ninh. Trả lời ngắn gọn, chính xác, tiếng Việt."
-        # Tạm thời bỏ Dữ liệu tham khảo để kiểm tra lỗi an toàn
-        prompt_user = f"{lh}\n\nCâu hỏi:\n{user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
+        prompt_user = f"{lh}\n\nCâu hỏi:\n{user_input}\n"
     else:
-        # Tạm thời bỏ Dữ liệu tham khảo
-        prompt_user = f"Tiếp tục cuộc trò chuyện. Tin nhắn user: {user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
-        # Dữ liệu tham khảo:\n{related_data}\n" # Giữ nguyên dòng này để tham khảo
+        # Bỏ hẳn System Instruction cho câu hỏi tiếp theo
+        prompt_user = f"Tiếp tục cuộc trò chuyện. Tin nhắn user: {user_input}\n"
+    
+    # Dòng này đảm bảo không có RAG được đưa vào:
+    # prompt_user += f"\nDữ liệu tham khảo:\n{related_data}\n" # KHÔNG DÙNG DÒNG NÀY
     
     # 4. Gọi Gemini API (Sửa lỗi 'NoneType' và thêm config token)
     with st.chat_message("assistant"):
@@ -169,7 +175,6 @@ if user_input:
                     config=gemini_config # Thêm giới hạn token
                 )
                 
-                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN (ĐÃ SỬA LỖI AttributeError) ---
                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN ---
                 full_text = ""
             
@@ -236,6 +241,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
