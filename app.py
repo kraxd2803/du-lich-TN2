@@ -220,8 +220,7 @@ if user_input:
                         full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({reason})."
                     elif full_text == "":
                          full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
-
-                 placeholder.markdown(full_text)
+                placeholder.markdown(full_text)
 
             except Exception as e_sync:
                 st.error("❌ Lỗi kết nối:")
@@ -258,6 +257,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
