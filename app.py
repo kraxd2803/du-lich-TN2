@@ -1,5 +1,5 @@
 import streamlit as st
-from google import genai
+import google.genai as genai
 import re
 from unidecode import unidecode
 
@@ -335,5 +335,6 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_msg})
     st.session_state.messages.append({"role": "assistant", "content": response})
     st.session_state.last_bot = response
+
 
 
