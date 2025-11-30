@@ -198,7 +198,7 @@ if user_input:
                     full_text = resp.text
                 elif hasattr(resp, "candidates") and resp.candidates:
                     try:
-                        candidate = resp.candidates[0]
+                        candidate = resp.candidates[0]
                         # Kiểm tra candidate và content có tồn tại không
                         if hasattr(candidate, "content") and candidate.content:
                             parts = getattr(candidate.content, "parts", None) # Lấy parts an toàn
@@ -258,6 +258,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
