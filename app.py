@@ -135,7 +135,7 @@ if user_input:
             # Đã tìm thấy thì dừng lại, không tìm tiếp
             break
             
-lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu. Trả lời tiếng Việt, trình bày đẹp, ngắn gọn."
+    lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu. Trả lời tiếng Việt, trình bày đẹp, ngắn gọn."
 
     if related_data:
         # TRƯỜNG HỢP A: CÓ DỮ LIỆU THAM KHẢO (Đã lọc sạch)
@@ -251,6 +251,7 @@ lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu. Trả lời 
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
