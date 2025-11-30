@@ -101,12 +101,12 @@ for msg in st.session_state.messages:
 user_input = st.chat_input("Nhập câu hỏi...")
 
 if user_input:
-    # show user message
+    # 1. Hiển thị tin nhắn User
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # find related data (only send related chunk)
+    # 2. Tìm dữ liệu liên quan (RAG)
     related_data = ""
     for place in tourism_data:
         if place.lower() in user_input.lower():
@@ -115,7 +115,7 @@ if user_input:
     if related_data == "":
         related_data = "Không tìm thấy dữ liệu trực tiếp trong kho dữ liệu."
 
-    # build prompt
+    # 3. Tạo Prompt
     new_question = is_new_question(user_input, st.session_state.last_bot)
     if new_question:
         lh = "Bạn là chatbot du lịch tỉnh Tây Ninh. Trả lời ngắn gọn, chính xác, tiếng Việt."
@@ -123,103 +123,93 @@ if user_input:
     else:
         prompt_user = f"Tiếp tục cuộc trò chuyện. Tin nhắn user: {user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
 
-    # place holder for assistant
+    # 4. Gọi Gemini API
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_text = ""
-
-        # Try streaming first (Gemini generate_content with stream=True)
+        
+        # --- BẮT ĐẦU GỌI API ---
         try:
+            # A. Thử Streaming trước
             stream = client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-1.5-flash", # ĐÃ ĐỔI VỀ 1.5 ĐỂ ỔN ĐỊNH HƠN
                 contents=prompt_user,
                 stream=True,
-                # You can pass additional generation parameters here if needed
-                # e.g. max_output_tokens=512, temperature=0.3
             )
 
-            # stream is an iterator of chunks
             for chunk in stream:
-                # chunk may expose .text or .content or .delta depending on SDK
                 chunk_text = ""
+                # Xử lý các định dạng chunk khác nhau của SDK
                 try:
-                    # most recent SDKs provide .text
                     if hasattr(chunk, "text") and chunk.text:
                         chunk_text = chunk.text
-                    # otherwise try content/parts
-                    elif hasattr(chunk, "content") and isinstance(chunk.content, dict):
-                        # new formats may put parts under content
-                        parts = chunk.content.get("parts") if isinstance(chunk.content.get("parts"), list) else None
-                        if parts:
-                            chunk_text = "".join([p.get("text", "") for p in parts])
-                    # some SDK versions: chunk.delta ? try to extract
-                    elif hasattr(chunk, "delta"):
-                        d = getattr(chunk, "delta")
-                        if isinstance(d, dict):
-                            chunk_text = d.get("content", "") or d.get("text", "")
+                    elif hasattr(chunk, "parts"):
+                         chunk_text = "".join([p.text for p in chunk.parts])
                 except Exception:
-                    chunk_text = ""
-
+                    pass
+                
                 if chunk_text:
                     full_text += chunk_text
-                    # update placeholder progressively
-                    # use markdown so newlines render properly
                     placeholder.markdown(full_text)
 
-            # streaming finished
-            if full_text.strip() == "":
-                # empty stream — fallback to sync call below
-                raise RuntimeError("Empty stream")
+            if not full_text.strip():
+                raise RuntimeError("Empty stream response")
 
-            except Exception as e_stream:
-            # Fallback: thử gọi không stream
-                try:
-                # ... (đoạn code gọi sync giữ nguyên) ...
-                # ...
-                except Exception as e_sync:
-                # 🛑 IN RA LỖI THỰC SỰ Ở ĐÂY
-                    st.error(f"Lỗi Stream: {e_stream}") 
-                    st.error(f"Lỗi Sync: {e_sync}")
+        except Exception as e_stream:
+            # B. Nếu Stream lỗi -> Fallback sang gọi Sync (Đồng bộ)
+            try:
+                resp = client.models.generate_content(
+                    model="gemini-1.5-flash", # ĐÃ ĐỔI VỀ 1.5
+                    contents=prompt_user,
+                    stream=False,
+                )
                 
-                    err_msg = "⚠️ Hệ thống đang gặp sự cố kết nối với Google AI."
-                    placeholder.markdown(err_msg)
-                    st.stop()
-        # save to history
+                # Lấy text từ response sync
+                if hasattr(resp, "text") and resp.text:
+                    full_text = resp.text
+                else:
+                    full_text = "Không có nội dung trả về."
+                
+                placeholder.markdown(full_text)
+
+            except Exception as e_sync:
+                # C. Cả 2 đều lỗi -> IN RA MÀN HÌNH ĐỂ DEBUG
+                st.error("❌ Đã xảy ra lỗi khi gọi Gemini API:")
+                st.code(f"Lỗi Stream: {e_stream}", language="text")
+                st.code(f"Lỗi Sync: {e_sync}", language="text")
+                st.stop()
+        
+        # --- KẾT THÚC GỌI API ---
+
+        # 5. Lưu lịch sử
         st.session_state.messages.append({"role": "assistant", "content": full_text})
         st.session_state.last_bot = full_text
 
-    # show related images if any
+    # 6. Hiển thị ảnh liên quan (nếu có)
+    found_img = False
     for place in tourism_data.keys():
         if place.lower() in user_input.lower() and place in images and isinstance(images[place], list):
-            st.subheader(f"📸 Hình ảnh về {place}")
-            for url in images[place]:
-                st.image(url, use_container_width=True)
+            if not found_img: 
+                st.subheader(f"📸 Hình ảnh gợi ý:")
+                found_img = True
+            st.caption(f"📍 {place}")
+            # Hiển thị tối đa 3 ảnh để không quá dài
+            cols = st.columns(min(len(images[place]), 3))
+            for idx, col in enumerate(cols):
+                col.image(images[place][idx], use_container_width=True)
 
-    # show weather
-    st.subheader("🌤️ Thời tiết hiện tại tại Tây Ninh")
-    lat, lon = 10.5359, 106.4137
+    # 7. Hiển thị thời tiết
+    st.divider()
+    cols_weather = st.columns(2)
+    lat, lon = 10.5359, 106.4137 # Tọa độ Tây Ninh
     weather = get_weather_simple(lat, lon)
+    
     if weather:
         current = weather.get("current_weather", {})
-        temp = current.get("temperature", "?")
-        time = current.get("time", "?")
-        current_hour = datetime.now().hour
-        rain_prob_list = weather.get("hourly", {}).get("precipitation_probability", [0]*24)
-        rain_prob = rain_prob_list[current_hour] if current_hour < len(rain_prob_list) else "?"
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("🌡️ Nhiệt độ", f"{temp}°C")
-        with col2:
-            st.metric("🌧️ Khả năng mưa", f"{rain_prob}%")
-        st.caption(f"⏱️ Cập nhật lúc: {time}")
-    else:
-        st.error("⚠️ Không thể tải dữ liệu thời tiết!")
-
-    st.session_state.messages.append({"role": "user", "content": user_msg})
-    st.session_state.messages.append({"role": "assistant", "content": response})
-    st.session_state.last_bot = response
-
-
+        temp = current.get("temperature", "--")
+        
+        with cols_weather[0]:
+            st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
 
 
 
