@@ -210,7 +210,7 @@ if user_input:
                                 # Nếu không có parts (thường do bị chặn)
                                 full_text = "🚫 Phản hồi bị chặn nội dung cấp thấp."
                         except Exception as e_candidate:
-                        # Lỗi khác khi truy cập candidates
+                             # Lỗi khác khi truy cập candidates
                             full_text = f"🚫 Lỗi truy cập phản hồi: {e_candidate}"
     
                 if not full_text or full_text.startswith("🚫"):
@@ -258,6 +258,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
