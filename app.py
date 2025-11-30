@@ -114,65 +114,46 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
+    # 2. Xử lý RAG và Prompt
     related_data = ""
-    # Chuẩn hóa input người dùng để so sánh (bỏ dấu, viết thường)
     user_norm = normalize(user_input)
     
+    # Tìm dữ liệu liên quan
     for place in tourism_data:
-        # Chuẩn hóa tên địa điểm trong data (ví dụ: "núi bà đen" -> "nui ba den")
         place_norm = normalize(place)
-        
-        # Kiểm tra xem từ khóa địa điểm có nằm trong câu hỏi không
         if place_norm in user_norm:
             raw_data = tourism_data[place]
-            # QUAN TRỌNG: Làm sạch dữ liệu (xóa link Maps) trước khi dùng
             related_data = clean_rag_data(raw_data)
-            
-            # Cắt ngắn nếu quá dài (tránh tốn token)
             if len(related_data) > 3000:
                 related_data = related_data[:3000] + "..."
-            
-            # Đã tìm thấy thì dừng lại, không tìm tiếp
             break
-            
+
+    # Cấu hình Prompt
     lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu. Trả lời tiếng Việt, trình bày đẹp, ngắn gọn."
 
     if related_data:
-        # TRƯỜNG HỢP A: CÓ DỮ LIỆU THAM KHẢO (Đã lọc sạch)
         prompt_user = f"""{lh}
-        
-        Hãy trả lời câu hỏi phần lớn dựa trên thông tin dưới đây. 
-        Có thể kết hợp thông tin của bạn nhưng tuyệt đối không bịa đặt thông tin nếu không chắc chắn chính xác.
-        
-        --- DỮ LIỆU VỀ {place.upper()} ---
+        Dựa vào thông tin sau để trả lời (không bịa đặt):
+        --- DỮ LIỆU ---
         {related_data}
-        ----------------------------------
-        
+        ---------------
         Câu hỏi: {user_input}
         """
-        # (Tùy chọn) Hiển thị thông báo nhỏ để biết bot đang đọc data
-        # st.toast(f"Đang đọc dữ liệu về: {place}") 
-        
     else:
-        # TRƯỜNG HỢP B: KHÔNG TÌM THẤY DỮ LIỆU CỤ THỂ
-        # Cho phép chém gió dựa trên kiến thức chung, nhưng nhắc khéo
+        # Prompt "mở" hơn cho các câu chào hỏi xã giao
         prompt_user = f"""{lh}
-        
         Câu hỏi: {user_input}
-        (Hãy trả lời dựa trên kiến thức chung của bạn về Tây Ninh).
+        (Nếu là chào hỏi, hãy chào lại thân thiện. Nếu hỏi về Tây Ninh mà không có dữ liệu, hãy dùng kiến thức chung).
         """
 
-    # 4. Gọi Gemini API (Sửa lỗi Indentation và Logic)
+    # 3. Gọi Gemini API (Logic lấy text siêu bền vững)
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_text = ""
-        
-        # Cấu hình Token Output (256 tokens)
-        gemini_config = {"max_output_tokens": 256} 
+        gemini_config = {"max_output_tokens": 512} 
 
-        # --- BẮT ĐẦU GỌI API ---
         try:
-            # A. Thử Streaming
+            # --- GỌI STREAMING ---
             stream = client.models.generate_content_stream(
                 model="gemini-2.5-flash", 
                 contents=prompt_user,
@@ -181,9 +162,15 @@ if user_input:
 
             for chunk in stream:
                 chunk_text = ""
+                # Logic lấy text đa tầng (Deep Extraction)
                 try:
+                    # Ưu tiên 1: Lấy trực tiếp .text
                     if hasattr(chunk, "text") and chunk.text:
                         chunk_text = chunk.text
+                    # Ưu tiên 2: Lấy từ candidates > parts (phòng khi .text bị None)
+                    elif hasattr(chunk, "candidates") and chunk.candidates:
+                        parts = chunk.candidates[0].content.parts
+                        chunk_text = "".join([p.text for p in parts if p.text])
                 except Exception:
                     pass
                 
@@ -191,11 +178,12 @@ if user_input:
                     full_text += chunk_text
                     placeholder.markdown(full_text)
 
+            # Kiểm tra cuối cùng
             if not full_text.strip():
-                raise RuntimeError("Phản hồi rỗng (Có thể bị lọc nội dung).") 
+                raise RuntimeError("Empty Stream")
 
         except Exception as e_stream:
-            # B. Nếu Stream lỗi -> Fallback sang gọi Sync
+            # --- FALLBACK: GỌI SYNC (Dự phòng) ---
             try:
                 resp = client.models.generate_content(
                     model="gemini-2.5-flash", 
@@ -203,71 +191,53 @@ if user_input:
                     config=gemini_config
                 )
                 
-                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN (ĐÃ SỬA LỖI THỤT LỀ) ---
+                # Logic lấy text cho Sync (Deep Extraction)
                 full_text = ""
-                
-                # 1. KIỂM TRA LỖI LỌC AN TOÀN TRƯỚC
-                if (hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None and 
-                    hasattr(resp.prompt_feedback, "block_reason") and resp.prompt_feedback.block_reason):
-                    
-                    reason_name = resp.prompt_feedback.block_reason.name if hasattr(resp.prompt_feedback.block_reason, 'name') else 'Lý do không xác định'
-                    full_text = f"🚫 Nội dung bị chặn do vi phạm chính sách an toàn: **{reason_name}**"
-                
-                # 2. KIỂM TRA XEM CÓ TEXT TRẢ VỀ KHÔNG
-                elif hasattr(resp, "text") and resp.text:
+                if hasattr(resp, "text") and resp.text:
                     full_text = resp.text
+                elif hasattr(resp, "candidates") and resp.candidates:
+                    parts = resp.candidates[0].content.parts
+                    full_text = "".join([p.text for p in parts if p.text])
                 
-                # 3. Nếu vẫn không có nội dung
                 if not full_text:
-                     full_text = "⚠️ Phản hồi rỗng hoặc không có nội dung liên quan."
+                     full_text = "⚠️ Gemini không phản hồi (Nội dung có thể bị chặn)."
 
                 placeholder.markdown(full_text)
 
             except Exception as e_sync:
-                # C. Cả 2 đều lỗi -> In lỗi chi tiết
-                st.error("❌ Đã xảy ra lỗi kết nối Gemini:")
-                st.write("Lỗi Stream:", e_stream)
-                st.write("Lỗi Sync:", e_sync)
+                st.error("❌ Lỗi kết nối:")
+                st.code(f"Stream Error: {e_stream}\nSync Error: {e_sync}")
                 st.stop()
         
-        # --- KẾT THÚC GỌI API ---
-
-        # 5. Lưu lịch sử
+        # 4. Lưu lịch sử
         st.session_state.messages.append({"role": "assistant", "content": full_text})
         st.session_state.last_bot = full_text
-        
-        # 6. Hiển thị ảnh liên quan (Đã loại bỏ logic RAG phức tạp, chỉ giữ lại hiển thị)
-        # BẠN CẦN THÊM LẠI LOGIC TÌM KIẾM PLACE TẠI ĐÂY NẾU MUỐN HIỂN THỊ ẢNH
-        
-    # 7. Hiển thị thời tiết (Đã sửa lỗi thụt lề)
+
+    # 5. Hiển thị ảnh (nếu có keyword địa điểm trong câu hỏi)
+    # Logic: Chỉ hiện ảnh nếu tìm thấy key trong tourism_data trùng với câu hỏi
+    found_img = False
+    for place in tourism_data.keys():
+        if normalize(place) in normalize(user_input):
+            if place in images and isinstance(images[place], list):
+                if not found_img: 
+                    st.divider()
+                    st.caption(f"📸 Hình ảnh gợi ý: {place}")
+                    found_img = True
+                cols = st.columns(min(len(images[place]), 3))
+                for idx, col in enumerate(cols):
+                    col.image(images[place][idx], use_container_width=True)
+            break # Chỉ hiện ảnh của 1 địa điểm chính nhất
+
+    # 6. Hiển thị thời tiết
     st.divider()
     cols_weather = st.columns(2)
-    lat, lon = 10.5359, 106.4137 # Tọa độ Tây Ninh
+    lat, lon = 10.5359, 106.4137
     weather = get_weather_simple(lat, lon)
     
     if weather:
         current = weather.get("current_weather", {})
         temp = current.get("temperature", "--")
-        
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
