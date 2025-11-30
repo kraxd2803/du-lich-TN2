@@ -12,7 +12,6 @@ from datetime import datetime
 # Make sure you set st.secrets["gemini_key"] in Streamlit Cloud
 client = genai.Client(
     api_key=st.secrets["gemini_key"],
-    http_options={"api_version": "v1alpha"}  # v1alpha hoặc v1 tùy account
 )
 
 # ======================================
@@ -217,6 +216,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
