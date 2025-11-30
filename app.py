@@ -85,7 +85,7 @@ def get_weather_simple(lat, lon):
 # ======================================
 st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="🗺️")
 st.title("🗺️ Chatbot Du Lịch Tây Ninh – Gemini Streaming")
-st.caption("Made by Đăng Khoa 🔰 - 1.0")
+st.caption("Made by Đăng Khoa 🔰 - 1.1")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -216,6 +216,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
