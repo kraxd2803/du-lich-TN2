@@ -126,7 +126,11 @@ if user_input:
             related_data = clean_rag_data(raw_data)
             if len(related_data) > 3000:
                 related_data = related_data[:3000] + "..."
+            # LƯU TÊN ĐỊA ĐIỂM ĐỂ DÙNG HIỂN THỊ ẢNH
+            found_place = place 
             break
+    else:
+        found_place = None # Không tìm thấy địa điểm
 
     # Cấu hình Prompt
     lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu. Trả lời tiếng Việt, trình bày đẹp, ngắn gọn."
@@ -150,7 +154,7 @@ if user_input:
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_text = ""
-        gemini_config = {"max_output_tokens": 512} 
+        gemini_config = {"max_output_tokens": 1024} 
 
         try:
             # --- GỌI STREAMING ---
@@ -162,12 +166,10 @@ if user_input:
 
             for chunk in stream:
                 chunk_text = ""
-                # Logic lấy text đa tầng (Deep Extraction)
                 try:
-                    # Ưu tiên 1: Lấy trực tiếp .text
+                    # Logic lấy text đa tầng (Deep Extraction)
                     if hasattr(chunk, "text") and chunk.text:
                         chunk_text = chunk.text
-                    # Ưu tiên 2: Lấy từ candidates > parts (phòng khi .text bị None)
                     elif hasattr(chunk, "candidates") and chunk.candidates:
                         parts = chunk.candidates[0].content.parts
                         chunk_text = "".join([p.text for p in parts if p.text])
@@ -178,13 +180,14 @@ if user_input:
                     full_text += chunk_text
                     placeholder.markdown(full_text)
 
-            # Kiểm tra cuối cùng
+            # Kiểm tra cuối cùng: Nếu full_text rỗng sau khi stream kết thúc
             if not full_text.strip():
-                raise RuntimeError("Empty Stream")
+                raise RuntimeError("Empty Stream") 
 
         except Exception as e_stream:
-            # --- FALLBACK: GỌI SYNC (Dự phòng) ---
+            # Nếu Stream lỗi (e.g. Empty Stream) -> Chuyển sang Sync
             try:
+                # --- FALLBACK: GỌI SYNC (Dự phòng) ---
                 resp = client.models.generate_content(
                     model="gemini-2.5-flash", 
                     contents=prompt_user,
@@ -196,67 +199,55 @@ if user_input:
                 
                 if hasattr(resp, "text") and resp.text:
                     full_text = resp.text
+                
                 elif hasattr(resp, "candidates") and resp.candidates:
                     try:
                         candidate = resp.candidates[0]
-                        # Kiểm tra candidate và content có tồn tại không
                         if hasattr(candidate, "content") and candidate.content:
-                            parts = getattr(candidate.content, "parts", None) # Lấy parts an toàn
-                            
-                            # Chỉ lặp nếu parts tồn tại và là list
+                            parts = getattr(candidate.content, "parts", None) 
                             if parts and isinstance(parts, list):
                                 full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
-                            else:
-                                # Nếu không có parts (thường do bị chặn)
-                                full_text = "🚫 Phản hồi bị chặn nội dung cấp thấp."
                     except Exception as e_candidate:
-                             # Lỗi khác khi truy cập candidates
                         full_text = f"🚫 Lỗi truy cập phản hồi: {e_candidate}"
-    
+                
+                # Kiểm tra lỗi chặn sau khi đã cố gắng lấy text
                 if not full_text or full_text.startswith("🚫"):
-    # Nếu vẫn rỗng, kiểm tra lại lỗi chặn cấp cao
                     if hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None:
                         feedback = resp.prompt_feedback
-        
-        # KIỂM TRA block_reason CÓ TỒN TẠI VÀ KHÔNG PHẢI LÀ NONE
                         if hasattr(feedback, "block_reason") and feedback.block_reason is not None:
                             reason = feedback.block_reason.name
                             full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({reason})."
-        
-        # Nếu không có block_reason, chỉ là phản hồi rỗng đơn thuần
+                        elif full_text == "":
+                            full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
                     elif full_text == "":
                         full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
 
+                placeholder.markdown(full_text)
+
             except Exception as e_sync:
-                st.error("❌ Lỗi kết nối:")
+                # Cả Stream và Sync đều lỗi -> Báo lỗi kết nối
+                st.error("❌ Lỗi kết nối API:")
                 st.code(f"Stream Error: {e_stream}\nSync Error: {e_sync}")
                 st.stop()
-        
-        # 4. Lưu lịch sử
-        st.session_state.messages.append({"role": "assistant", "content": full_text})
-        st.session_state.last_bot = full_text
+    
+    # 4. Lưu lịch sử
+    st.session_state.messages.append({"role": "assistant", "content": full_text})
+    st.session_state.last_bot = full_text
 
     # 5. Hiển thị ảnh (nếu có keyword địa điểm trong câu hỏi)
-    # Logic: Chỉ hiện ảnh nếu tìm thấy key trong tourism_data trùng với câu hỏi
-    found_img = False
-    for place in tourism_data.keys():
-        if normalize(place) in normalize(user_input):
-            if place in images and isinstance(images[place], list):
-                if not found_img: 
-                    st.divider()
-                    st.caption(f"📸 Hình ảnh gợi ý: {place}")
-                    found_img = True
-                cols = st.columns(min(len(images[place]), 3))
-                for idx, col in enumerate(cols):
-                    col.image(images[place][idx], use_container_width=True)
-            break # Chỉ hiện ảnh của 1 địa điểm chính nhất
+    if found_place and found_place in images and isinstance(images[found_place], list):
+        st.divider()
+        st.caption(f"📸 Hình ảnh gợi ý: {found_place}")
+        cols = st.columns(min(len(images[found_place]), 3))
+        for idx, col in enumerate(cols):
+            col.image(images[found_place][idx], use_container_width=True)
 
     # 6. Hiển thị thời tiết
     st.divider()
     cols_weather = st.columns(2)
     lat, lon = 10.5359, 106.4137
     weather = get_weather_simple(lat, lon)
-    
+
     if weather:
         current = weather.get("current_weather", {})
         temp = current.get("temperature", "--")
