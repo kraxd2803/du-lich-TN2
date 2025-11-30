@@ -105,19 +105,12 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # 2. Tìm dữ liệu liên quan (RAG)
-    related_data = ""
-    for place in tourism_data:
-        if place.lower() in user_input.lower():
-            related_data = tourism_data[place]
-            break
-    if related_data == "":
-        related_data = "Không tìm thấy dữ liệu trực tiếp trong kho dữ liệu."
-
-# 3. Tạo Prompt (Không có System Instruction)
-    prompt_user = f"Trả lời câu hỏi sau bằng tiếng Việt: {user_input}"
+    # 2. Bỏ qua RAG (TẠM THỜI) và tạo Prompt ĐƠN GIẢN
+    # LH: Loại bỏ System Instruction nghiêm ngặt để kiểm tra
+    lh = "Bạn là chatbot du lịch tỉnh Tây Ninh. Trả lời ngắn gọn, chính xác, tiếng Việt."
+    prompt_user = f"{lh}\n\nCâu hỏi:\n{user_input}\n"
     
-    # 4. Gọi Gemini API (Sửa lỗi 'NoneType' và thêm config token)
+    # 4. Gọi Gemini API (Sửa lỗi Indentation và Logic)
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_text = ""
@@ -131,12 +124,11 @@ if user_input:
             stream = client.models.generate_content_stream(
                 model="gemini-2.5-flash", 
                 contents=prompt_user,
-                config=gemini_config # Thêm giới hạn token
+                config=gemini_config
             )
 
             for chunk in stream:
                 chunk_text = ""
-                # Lấy text từ chunk (cấu trúc mới)
                 try:
                     if hasattr(chunk, "text") and chunk.text:
                         chunk_text = chunk.text
@@ -147,9 +139,7 @@ if user_input:
                     full_text += chunk_text
                     placeholder.markdown(full_text)
 
-            # Nếu full_text rỗng sau khi streaming xong, kiểm tra lỗi và raise
             if not full_text.strip():
-                # Dùng lỗi tùy chỉnh để dễ debug hơn
                 raise RuntimeError("Phản hồi rỗng (Có thể bị lọc nội dung).") 
 
         except Exception as e_stream:
@@ -158,32 +148,24 @@ if user_input:
                 resp = client.models.generate_content(
                     model="gemini-2.5-flash", 
                     contents=prompt_user,
-                    config=gemini_config # Thêm giới hạn token
+                    config=gemini_config
                 )
                 
-               # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN ---
+                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN (ĐÃ SỬA LỖI THỤT LỀ) ---
                 full_text = ""
-            
-            # 1. KIỂM TRA LỖI LỌC AN TOÀN TRƯỚC
+                
+                # 1. KIỂM TRA LỖI LỌC AN TOÀN TRƯỚC
                 if (hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None and 
                     hasattr(resp.prompt_feedback, "block_reason") and resp.prompt_feedback.block_reason):
-                
+                    
                     reason_name = resp.prompt_feedback.block_reason.name if hasattr(resp.prompt_feedback.block_reason, 'name') else 'Lý do không xác định'
                     full_text = f"🚫 Nội dung bị chặn do vi phạm chính sách an toàn: **{reason_name}**"
-            
-            # 2. KIỂM TRA XEM CÓ TEXT TRẢ VỀ KHÔNG
+                
+                # 2. KIỂM TRA XEM CÓ TEXT TRẢ VỀ KHÔNG
                 elif hasattr(resp, "text") and resp.text:
                     full_text = resp.text
-            
-            # 3. Phân tích cấu trúc sâu hơn (dành cho các trường hợp hiếm gặp)
-                elif hasattr(resp, "candidates") and resp.candidates:
-                    cand = resp.candidates[0]
-                    if hasattr(cand, "content") and cand.content:
-                        parts = getattr(cand.content, "parts", None)
-                        if parts:
-                            full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
-            
-            # 4. Nếu vẫn không có nội dung, báo lỗi chung chung (Giữ nguyên dòng này)
+                
+                # 3. Nếu vẫn không có nội dung
                 if not full_text:
                      full_text = "⚠️ Phản hồi rỗng hoặc không có nội dung liên quan."
 
@@ -202,20 +184,10 @@ if user_input:
         st.session_state.messages.append({"role": "assistant", "content": full_text})
         st.session_state.last_bot = full_text
         
-    # 6. Hiển thị ảnh liên quan (nếu có)
-    found_img = False
-    for place in tourism_data.keys():
-        if place.lower() in user_input.lower() and place in images and isinstance(images[place], list):
-            if not found_img: 
-                st.subheader(f"📸 Hình ảnh gợi ý:")
-                found_img = True
-            st.caption(f"📍 {place}")
-            # Hiển thị tối đa 3 ảnh để không quá dài
-            cols = st.columns(min(len(images[place]), 3))
-            for idx, col in enumerate(cols):
-                col.image(images[place][idx], use_container_width=True)
-
-    # 7. Hiển thị thời tiết
+        # 6. Hiển thị ảnh liên quan (Đã loại bỏ logic RAG phức tạp, chỉ giữ lại hiển thị)
+        # BẠN CẦN THÊM LẠI LOGIC TÌM KIẾM PLACE TẠI ĐÂY NẾU MUỐN HIỂN THỊ ẢNH
+        
+    # 7. Hiển thị thời tiết (Đã sửa lỗi thụt lề)
     st.divider()
     cols_weather = st.columns(2)
     lat, lon = 10.5359, 106.4137 # Tọa độ Tây Ninh
@@ -227,6 +199,13 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+    if weather:
+        current = weather.get("current_weather", {})
+        temp = current.get("temperature", "--")
+        
+        with cols_weather[0]:
+            st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
