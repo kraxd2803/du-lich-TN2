@@ -168,32 +168,32 @@ if user_input:
                 
                 # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN (ĐÃ SỬA LỖI AttributeError) ---
                # --- LOGIC XỬ LÝ PHẢN HỒI RẮN CHẮC HƠN ---
-            full_text = ""
+                full_text = ""
             
             # 1. KIỂM TRA LỖI LỌC AN TOÀN TRƯỚC
-            if (hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None and 
-                hasattr(resp.prompt_feedback, "block_reason") and resp.prompt_feedback.block_reason):
+                if (hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None and 
+                    hasattr(resp.prompt_feedback, "block_reason") and resp.prompt_feedback.block_reason):
                 
-                reason_name = resp.prompt_feedback.block_reason.name if hasattr(resp.prompt_feedback.block_reason, 'name') else 'Lý do không xác định'
-                full_text = f"🚫 Nội dung bị chặn do vi phạm chính sách an toàn: **{reason_name}**"
+                    reason_name = resp.prompt_feedback.block_reason.name if hasattr(resp.prompt_feedback.block_reason, 'name') else 'Lý do không xác định'
+                    full_text = f"🚫 Nội dung bị chặn do vi phạm chính sách an toàn: **{reason_name}**"
             
             # 2. KIỂM TRA XEM CÓ TEXT TRẢ VỀ KHÔNG
-            elif hasattr(resp, "text") and resp.text:
-                full_text = resp.text
+                elif hasattr(resp, "text") and resp.text:
+                    full_text = resp.text
             
             # 3. Phân tích cấu trúc sâu hơn (dành cho các trường hợp hiếm gặp)
-            elif hasattr(resp, "candidates") and resp.candidates:
-                cand = resp.candidates[0]
-                if hasattr(cand, "content") and cand.content:
-                    parts = getattr(cand.content, "parts", None)
-                    if parts:
-                        full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
+                elif hasattr(resp, "candidates") and resp.candidates:
+                    cand = resp.candidates[0]
+                    if hasattr(cand, "content") and cand.content:
+                        parts = getattr(cand.content, "parts", None)
+                        if parts:
+                            full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
             
             # 4. Nếu vẫn không có nội dung, báo lỗi chung chung (Giữ nguyên dòng này)
-            if not full_text:
-                 full_text = "⚠️ Phản hồi rỗng hoặc không có nội dung liên quan."
+                if not full_text:
+                     full_text = "⚠️ Phản hồi rỗng hoặc không có nội dung liên quan."
 
-            placeholder.markdown(full_text)
+                placeholder.markdown(full_text)
 
             except Exception as e_sync:
                 # C. Cả 2 đều lỗi -> In lỗi chi tiết
