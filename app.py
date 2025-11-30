@@ -197,7 +197,7 @@ if user_input:
                 if hasattr(resp, "text") and resp.text:
                     full_text = resp.text
                 elif hasattr(resp, "candidates") and resp.candidates:
-                    try:
+                    try:
                         candidate = resp.candidates[0]
                         # Kiểm tra candidate và content có tồn tại không
                         if hasattr(candidate, "content") and candidate.content:
@@ -209,7 +209,7 @@ if user_input:
                             else:
                                 # Nếu không có parts (thường do bị chặn)
                                 full_text = "🚫 Phản hồi bị chặn nội dung cấp thấp."
-                    except Exception as e_candidate:
+                    except Exception as e_candidate:
                         # Lỗi khác khi truy cập candidates
                         full_text = f"🚫 Lỗi truy cập phản hồi: {e_candidate}"
     
@@ -258,6 +258,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
