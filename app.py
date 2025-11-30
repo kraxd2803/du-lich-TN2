@@ -171,19 +171,19 @@ if user_input:
                 # empty stream — fallback to sync call below
                 raise RuntimeError("Empty stream")
 
-        except Exception as e_stream:
+            except Exception as e_stream:
             # Fallback: thử gọi không stream
-            try:
+                try:
                 # ... (đoạn code gọi sync giữ nguyên) ...
                 # ...
-            except Exception as e_sync:
+                except Exception as e_sync:
                 # 🛑 IN RA LỖI THỰC SỰ Ở ĐÂY
-                st.error(f"Lỗi Stream: {e_stream}") 
-                st.error(f"Lỗi Sync: {e_sync}")
+                    st.error(f"Lỗi Stream: {e_stream}") 
+                    st.error(f"Lỗi Sync: {e_sync}")
                 
-                err_msg = "⚠️ Hệ thống đang gặp sự cố kết nối với Google AI."
-                placeholder.markdown(err_msg)
-                st.stop()
+                    err_msg = "⚠️ Hệ thống đang gặp sự cố kết nối với Google AI."
+                    placeholder.markdown(err_msg)
+                    st.stop()
         # save to history
         st.session_state.messages.append({"role": "assistant", "content": full_text})
         st.session_state.last_bot = full_text
@@ -218,6 +218,7 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_msg})
     st.session_state.messages.append({"role": "assistant", "content": response})
     st.session_state.last_bot = response
+
 
 
 
