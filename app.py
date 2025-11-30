@@ -134,6 +134,7 @@ if user_input:
             stream = client.models.generate_content_stream(
                 model="gemini-2.5-flash", 
                 contents=prompt_user,
+                config={"max_output_tokens": 256}
             )
 
             for chunk in stream:
@@ -165,6 +166,7 @@ if user_input:
                 resp = client.models.generate_content(
                     model="gemini-2.5-flash", 
                     contents=prompt_user,
+                    config={"max_output_tokens": 256}
                 )
                 
                 # Lấy text từ response sync
@@ -216,6 +218,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
