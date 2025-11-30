@@ -118,10 +118,13 @@ if user_input:
     new_question = is_new_question(user_input, st.session_state.last_bot)
     if new_question:
         lh = "Bạn là chatbot du lịch tỉnh Tây Ninh. Trả lời ngắn gọn, chính xác, tiếng Việt."
+        # Tạm thời bỏ Dữ liệu tham khảo để kiểm tra lỗi an toàn
         prompt_user = f"{lh}\n\nCâu hỏi:\n{user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
     else:
+        # Tạm thời bỏ Dữ liệu tham khảo
         prompt_user = f"Tiếp tục cuộc trò chuyện. Tin nhắn user: {user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
-
+        # Dữ liệu tham khảo:\n{related_data}\n" # Giữ nguyên dòng này để tham khảo
+    
     # 4. Gọi Gemini API (Sửa lỗi 'NoneType' và thêm config token)
     with st.chat_message("assistant"):
         placeholder = st.empty()
@@ -233,6 +236,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
