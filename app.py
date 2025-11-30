@@ -123,28 +123,31 @@ if user_input:
     else:
         prompt_user = f"Tiếp tục cuộc trò chuyện. Tin nhắn user: {user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
 
-    # 4. Gọi Gemini API
+# 4. Gọi Gemini API (Code đã sửa cho SDK google-genai mới nhất)
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_text = ""
         
         # --- BẮT ĐẦU GỌI API ---
         try:
-            # A. Thử Streaming trước
-            stream = client.models.generate_content(
-                model="gemini-1.5-flash", # ĐÃ ĐỔI VỀ 1.5 ĐỂ ỔN ĐỊNH HƠN
+            # A. Thử Streaming (Dùng hàm generate_content_stream)
+            # LƯU Ý: Đổi tên hàm, bỏ tham số stream=True
+            stream = client.models.generate_content_stream(
+                model="gemini-1.5-flash", 
                 contents=prompt_user,
-                stream=True,
             )
 
             for chunk in stream:
                 chunk_text = ""
-                # Xử lý các định dạng chunk khác nhau của SDK
+                # Xử lý text từ chunk (cấu trúc mới)
                 try:
+                    # Kiểm tra nếu chunk có thuộc tính text trực tiếp
                     if hasattr(chunk, "text") and chunk.text:
                         chunk_text = chunk.text
-                    elif hasattr(chunk, "parts"):
-                         chunk_text = "".join([p.text for p in chunk.parts])
+                    # Nếu không, kiểm tra trong candidates/parts
+                    elif hasattr(chunk, "candidates") and chunk.candidates:
+                         parts = chunk.candidates[0].content.parts
+                         chunk_text = "".join([p.text for p in parts if p.text])
                 except Exception:
                     pass
                 
@@ -153,30 +156,34 @@ if user_input:
                     placeholder.markdown(full_text)
 
             if not full_text.strip():
+                # Nếu stream rỗng, thử fallback
                 raise RuntimeError("Empty stream response")
 
         except Exception as e_stream:
-            # B. Nếu Stream lỗi -> Fallback sang gọi Sync (Đồng bộ)
+            # B. Nếu Stream lỗi -> Fallback sang gọi Sync
             try:
+                # LƯU Ý: Dùng hàm generate_content, KHÔNG truyền stream=False
                 resp = client.models.generate_content(
-                    model="gemini-1.5-flash", # ĐÃ ĐỔI VỀ 1.5
+                    model="gemini-1.5-flash", 
                     contents=prompt_user,
-                    stream=False,
                 )
                 
                 # Lấy text từ response sync
                 if hasattr(resp, "text") and resp.text:
                     full_text = resp.text
+                elif hasattr(resp, "candidates") and resp.candidates:
+                     parts = resp.candidates[0].content.parts
+                     full_text = "".join([p.text for p in parts if p.text])
                 else:
                     full_text = "Không có nội dung trả về."
                 
                 placeholder.markdown(full_text)
 
             except Exception as e_sync:
-                # C. Cả 2 đều lỗi -> IN RA MÀN HÌNH ĐỂ DEBUG
-                st.error("❌ Đã xảy ra lỗi khi gọi Gemini API:")
-                st.code(f"Lỗi Stream: {e_stream}", language="text")
-                st.code(f"Lỗi Sync: {e_sync}", language="text")
+                # C. Cả 2 đều lỗi -> In lỗi chi tiết
+                st.error("❌ Đã xảy ra lỗi kết nối Gemini:")
+                st.write("Lỗi Stream:", e_stream)
+                st.write("Lỗi Sync:", e_sync)
                 st.stop()
         
         # --- KẾT THÚC GỌI API ---
@@ -210,6 +217,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
