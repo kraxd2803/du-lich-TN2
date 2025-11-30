@@ -214,13 +214,18 @@ if user_input:
                         full_text = f"🚫 Lỗi truy cập phản hồi: {e_candidate}"
     
                 if not full_text or full_text.startswith("🚫"):
-                            # Nếu vẫn rỗng, kiểm tra lại lỗi chặn cấp cao
-                    if hasattr(resp, "prompt_feedback") and resp.prompt_feedback.block_reason:
-                        reason = resp.prompt_feedback.block_reason.name
-                        full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({reason})."
+    # Nếu vẫn rỗng, kiểm tra lại lỗi chặn cấp cao
+                    if hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None:
+                        feedback = resp.prompt_feedback
+        
+        # KIỂM TRA block_reason CÓ TỒN TẠI VÀ KHÔNG PHẢI LÀ NONE
+                        if hasattr(feedback, "block_reason") and feedback.block_reason is not None:
+                            reason = feedback.block_reason.name
+                            full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({reason})."
+        
+        # Nếu không có block_reason, chỉ là phản hồi rỗng đơn thuần
                     elif full_text == "":
-                         full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
-                placeholder.markdown(full_text)
+                        full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
 
             except Exception as e_sync:
                 st.error("❌ Lỗi kết nối:")
@@ -257,6 +262,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
