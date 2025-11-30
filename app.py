@@ -193,16 +193,32 @@ if user_input:
                 
                 # Logic lấy text cho Sync (Deep Extraction)
                 full_text = ""
+                
                 if hasattr(resp, "text") and resp.text:
                     full_text = resp.text
+        
                 elif hasattr(resp, "candidates") and resp.candidates:
-                    parts = resp.candidates[0].content.parts
-                    full_text = "".join([p.text for p in parts if p.text])
-                
-                if not full_text:
-                     full_text = "⚠️ Gemini không phản hồi (Nội dung có thể bị chặn)."
+                    try:
+                        # KIỂM TRA candidate[0] có tồn tại không
+                        candidate = resp.candidates[0]
+                        if hasattr(candidate, "content") and candidate.content:
+                            parts = candidate.content.parts
+                # Đảm bảo parts không rỗng và lặp an toàn
+                            if parts:
+                                full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
+                    except Exception as e_candidate:
+                        # Nếu lỗi truy cập candidates (ví dụ: bị chặn)
+                        full_text = f"🚫 Dữ liệu bị chặn hoặc không hợp lệ: {e_candidate}"
+    
+                if not full_text or full_text.startswith("🚫"):
+                            # Nếu vẫn rỗng, kiểm tra lại lỗi chặn cấp cao
+                    if hasattr(resp, "prompt_feedback") and resp.prompt_feedback.block_reason:
+                        reason = resp.prompt_feedback.block_reason.name
+                        full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({reason})."
+                    elif full_text == "":
+                         full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
 
-                placeholder.markdown(full_text)
+                 placeholder.markdown(full_text)
 
             except Exception as e_sync:
                 st.error("❌ Lỗi kết nối:")
@@ -239,5 +255,6 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
