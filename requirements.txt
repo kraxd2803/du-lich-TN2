@@ -1,6 +1,7 @@
-streamlit
+
 requests
 streamlit
 google-generativeai
 unidecode
+
 
