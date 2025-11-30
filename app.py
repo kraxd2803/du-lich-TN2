@@ -196,19 +196,22 @@ if user_input:
                 
                 if hasattr(resp, "text") and resp.text:
                     full_text = resp.text
-        
                 elif hasattr(resp, "candidates") and resp.candidates:
-                    try:
-                        # KIỂM TRA candidate[0] có tồn tại không
-                        candidate = resp.candidates[0]
-                        if hasattr(candidate, "content") and candidate.content:
-                            parts = candidate.content.parts
-                # Đảm bảo parts không rỗng và lặp an toàn
-                            if parts:
-                                full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
-                    except Exception as e_candidate:
-                        # Nếu lỗi truy cập candidates (ví dụ: bị chặn)
-                        full_text = f"🚫 Dữ liệu bị chặn hoặc không hợp lệ: {e_candidate}"
+                    try:
+                        candidate = resp.candidates[0]
+                        # Kiểm tra candidate và content có tồn tại không
+                        if hasattr(candidate, "content") and candidate.content:
+                            parts = getattr(candidate.content, "parts", None) # Lấy parts an toàn
+                            
+                            # Chỉ lặp nếu parts tồn tại và là list
+                            if parts and isinstance(parts, list):
+                                full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
+                            else:
+                                # Nếu không có parts (thường do bị chặn)
+                                full_text = "🚫 Phản hồi bị chặn nội dung cấp thấp."
+                    except Exception as e_candidate:
+                        # Lỗi khác khi truy cập candidates
+                        full_text = f"🚫 Lỗi truy cập phản hồi: {e_candidate}"
     
                 if not full_text or full_text.startswith("🚫"):
                             # Nếu vẫn rỗng, kiểm tra lại lỗi chặn cấp cao
@@ -255,6 +258,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
