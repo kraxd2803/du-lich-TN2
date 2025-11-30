@@ -80,6 +80,15 @@ def get_weather_simple(lat, lon):
     except Exception:
         return None
 
+def clean_rag_data(text):
+    if not text: return ""
+    # 1. Xóa các đường link http/https
+    text = re.sub(r'http\S+', '', text)
+    # 2. Xóa chữ "Link Google Maps:" thừa ra
+    text = text.replace("Link Google Maps:", "")
+    # 3. Xóa khoảng trắng thừa
+    return text.strip()
+    
 # ======================================
 # STREAMLIT UI
 # ======================================
@@ -105,11 +114,54 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # 2. Bỏ qua RAG (TẠM THỜI) và tạo Prompt ĐƠN GIẢN
-    # LH: Loại bỏ System Instruction nghiêm ngặt để kiểm tra
-    lh = "Bạn là chatbot du lịch tỉnh Tây Ninh. Trả lời ngắn gọn, chính xác, tiếng Việt."
-    prompt_user = f"{lh}\n\nCâu hỏi:\n{user_input}\n"
+    related_data = ""
+    # Chuẩn hóa input người dùng để so sánh (bỏ dấu, viết thường)
+    user_norm = normalize(user_input)
     
+    for place in tourism_data:
+        # Chuẩn hóa tên địa điểm trong data (ví dụ: "núi bà đen" -> "nui ba den")
+        place_norm = normalize(place)
+        
+        # Kiểm tra xem từ khóa địa điểm có nằm trong câu hỏi không
+        if place_norm in user_norm:
+            raw_data = tourism_data[place]
+            # QUAN TRỌNG: Làm sạch dữ liệu (xóa link Maps) trước khi dùng
+            related_data = clean_rag_data(raw_data)
+            
+            # Cắt ngắn nếu quá dài (tránh tốn token)
+            if len(related_data) > 3000:
+                related_data = related_data[:3000] + "..."
+            
+            # Đã tìm thấy thì dừng lại, không tìm tiếp
+            break
+            
+lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu. Trả lời tiếng Việt, trình bày đẹp, ngắn gọn."
+
+    if related_data:
+        # TRƯỜNG HỢP A: CÓ DỮ LIỆU THAM KHẢO (Đã lọc sạch)
+        prompt_user = f"""{lh}
+        
+        Hãy trả lời câu hỏi phần lớn dựa trên thông tin dưới đây. 
+        Có thể kết hợp thông tin của bạn nhưng tuyệt đối không bịa đặt thông tin nếu không chắc chắn chính xác.
+        
+        --- DỮ LIỆU VỀ {place.upper()} ---
+        {related_data}
+        ----------------------------------
+        
+        Câu hỏi: {user_input}
+        """
+        # (Tùy chọn) Hiển thị thông báo nhỏ để biết bot đang đọc data
+        # st.toast(f"Đang đọc dữ liệu về: {place}") 
+        
+    else:
+        # TRƯỜNG HỢP B: KHÔNG TÌM THẤY DỮ LIỆU CỤ THỂ
+        # Cho phép chém gió dựa trên kiến thức chung, nhưng nhắc khéo
+        prompt_user = f"""{lh}
+        
+        Câu hỏi: {user_input}
+        (Hãy trả lời dựa trên kiến thức chung của bạn về Tây Ninh).
+        """
+
     # 4. Gọi Gemini API (Sửa lỗi Indentation và Logic)
     with st.chat_message("assistant"):
         placeholder = st.empty()
@@ -199,6 +251,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
