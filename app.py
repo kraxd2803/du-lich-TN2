@@ -199,12 +199,12 @@ if user_input:
                 elif hasattr(resp, "candidates") and resp.candidates:
                     try:
                         candidate = resp.candidates[0]
-                        # Kiểm tra candidate và content có tồn tại không
-                        if hasattr(candidate, "content") and candidate.content:
-                            parts = getattr(candidate.content, "parts", None) # Lấy parts an toàn
+                        # Kiểm tra candidate và content có tồn tại không
+                        if hasattr(candidate, "content") and candidate.content:
+                            parts = getattr(candidate.content, "parts", None) # Lấy parts an toàn
                             
                             # Chỉ lặp nếu parts tồn tại và là list
-                            if parts and isinstance(parts, list):
+                            if parts and isinstance(parts, list):
                                 full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
                             else:
                                 # Nếu không có parts (thường do bị chặn)
@@ -258,6 +258,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
