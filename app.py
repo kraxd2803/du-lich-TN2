@@ -117,8 +117,8 @@ if user_input:
     # 3. Tạo Prompt
     new_question = is_new_question(user_input, st.session_state.last_bot)
     if new_question:
-        lh = "Bạn là chatbot du lịch tỉnh Tây Ninh. Trả lời ngắn gọn, chính xác, tiếng Việt. Trả lời phần lớn dựa trên dữ liệu tham khảo, có thể thêm theo ý bạn nhưng phải đảm bảo thông tin đó chính xác"
-        prompt_user = f"{lh}\n\nCâu hỏi:\n{user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
+        lh = "Bạn là chatbot du lịch tỉnh Tây Ninh. Trả lời ngắn gọn, chính xác, tiếng Việt."
+        prompt_user = f"{lh}\n\nCâu hỏi:\n{user_input}\n"
     else:
         prompt_user = f"Tiếp tục cuộc trò chuyện. Tin nhắn user: {user_input}\n\nDữ liệu tham khảo:\n{related_data}\n"
 
@@ -233,6 +233,7 @@ if user_input:
         
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
