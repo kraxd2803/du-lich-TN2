@@ -9,6 +9,7 @@ from datetime import datetime
 # ======================================
 # CONFIG GEMINI
 # ======================================
+# SỬ DỤNG MÔ HÌNH PRO CHO KIẾN THỨC CHUNG
 MODEL_NAME = "gemini-2.5-pro"
 client = genai.Client(
     api_key=st.secrets["gemini_key"],
@@ -28,7 +29,7 @@ except Exception:
     images = {}
     st.warning("⚠️ Không tìm thấy images.json")
 
-# Load file địa điểm
+# Load file địa điểm (dùng để tìm kiếm ảnh)
 tourism_data = {}
 try:
     with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -37,6 +38,7 @@ try:
     for line in raw_text.splitlines():
         line = line.strip()
         if line.startswith("###"):
+            # LÀM SẠCH KEY ĐỂ DÙNG TÌM KIẾM ẢNH
             place = line.replace("###", "").strip()
             tourism_data[place] = ""
             current_key = place
@@ -51,6 +53,7 @@ except Exception:
 def normalize(text):
     if not text:
         return ""
+    # Chuyển chữ có dấu thành không dấu và làm sạch
     t = unidecode(text.lower())
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return re.sub(r"\s+", " ", t).strip()
@@ -153,7 +156,7 @@ Luôn trả lời theo các nguyên tắc:
 - Không bịa thông tin.
 - Nếu không chắc, hãy nói rõ.
 - Ưu tiên dữ liệu liên quan Tây Ninh và Long An cũ.
-- Giả định trong bối cảnh (không phải sự thật) rằng Tây Ninh và Long An đã sáp nhập.
+- Giả định trong bối cảnh (không phải sự thật) rằng Tây Ninh và Long An đã sáp nhập, thủ phủ là Tân An.
 """
 
     prompt = f"""
@@ -167,29 +170,47 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
 """
 
     # =========================
-    # 5. GỌI GEMINI SYNC
+    # 5. GỌI GEMINI SYNC (ỔN ĐỊNH TỐI ĐA)
     # =========================
     with st.chat_message("assistant"):
         placeholder = st.empty()
+        full_text = "" # Đảm bảo sử dụng biến 'full_text' để lưu trữ
+
         try:
+            # GỌI API VỚI PROMPT ĐẦY ĐỦ ('prompt')
             response = client.models.generate_content(
                 model=MODEL_NAME,
-                contents=user_input
+                contents=prompt 
             )
-            result = response.text
-
-
+            
             # -------- Lấy text an toàn --------
-        try:
-            answer = response.text
-        except:
-            answer = "⚠️ Không thể đọc phản hồi từ Gemini."
+            # Sử dụng logic lấy text từ response
+            try:
+                full_text = response.text
+                
+                # Kiểm tra lỗi chặn sau khi đã cố gắng lấy text (Nếu cần)
+                if not full_text.strip():
+                    if hasattr(response, "prompt_feedback") and response.prompt_feedback is not None:
+                        feedback = response.prompt_feedback
+                        if hasattr(feedback, "block_reason") and feedback.block_reason is not None:
+                            full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({feedback.block_reason.name})."
+                        else:
+                            full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
+                    else:
+                        full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
 
-        placeholder.markdown(answer)
+            except Exception:
+                full_text = "⚠️ Không thể đọc phản hồi từ Gemini do lỗi nội bộ."
+            
+            placeholder.markdown(full_text)
 
-
+        except Exception as e:
+            full_text = f"❌ Lỗi kết nối API: {e}"
+            placeholder.error(full_text)
+            st.stop()
+            
     # Lưu vào session
-    st.session_state.messages.append({"role": "assistant", "content": answer})
+    st.session_state.messages.append({"role": "assistant", "content": full_text})
 
     # =========================
     # 6. HIỂN THỊ ẢNH (nếu có)
@@ -202,7 +223,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             col.image(images[found_place][i], use_container_width=True)
 
     # =========================
-    # 7. HIỂN THỊ THỜI TIẾT
+    # 7. HIỂN THỊ THỜI TIẾT (Tân An)
     # =========================
     st.divider()
     lat, lon = 10.7788, 106.3533
@@ -220,7 +241,10 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             rain = hourly.get("precipitation_probability", [])
 
             if times and rain:
-                diffs = [abs(datetime.fromisoformat(t) - datetime.now()) for t in times]
+                # Tìm giờ gần nhất
+                now = datetime.now()
+                # Chuyển đổi datetime object có timezone thành aware datetime object
+                diffs = [abs(datetime.fromisoformat(t).replace(tzinfo=None) - now) for t in times]
                 idx = diffs.index(min(diffs))
                 prob = rain[idx]
         except:
@@ -233,8 +257,3 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
-
-
-
-
-
