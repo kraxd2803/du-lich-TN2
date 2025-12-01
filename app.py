@@ -172,11 +172,12 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
     with st.chat_message("assistant"):
         placeholder = st.empty()
         try:
-            resp = client.models.generate_content(
+            response = client.models.generate_content(
                 model=MODEL_NAME,
-                contents=prompt,
-                config={"max_output_tokens": 1024},
+                contents=user_input
             )
+            result = response.text
+
 
             # -------- Lấy text an toàn --------
             answer = ""
@@ -246,4 +247,5 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
