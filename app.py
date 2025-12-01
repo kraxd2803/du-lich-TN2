@@ -181,7 +181,7 @@ if user_input:
         try:
             # --- GỌI STREAMING ---
             stream = client.models.generate_content_stream(
-                model="gemini-2.5-flash", 
+                model="gemini-2.5-pro", 
                 contents=prompt_user,
                 config=gemini_config
             )
@@ -211,7 +211,7 @@ if user_input:
             try:
                 # --- FALLBACK: GỌI SYNC (Dự phòng) ---
                 resp = client.models.generate_content(
-                    model="gemini-2.5-flash", 
+                    model="gemini-2.5-pro", 
                     contents=prompt_user,
                     config=gemini_config
                 )
@@ -275,6 +275,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
