@@ -150,12 +150,12 @@ if user_input:
         found_place = None # Không tìm thấy địa điểm
 
     # Cấu hình Prompt
-    lh = lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu, thân thiện, trả lời bằng tiếng Việt. (Lưu ý: Tây Ninh hiện nay bao gồm cả khu vực Long An cũ, thủ phủ tại Tân An, hiệu lực từ 01/07/2025)."
+    lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu, thân thiện, trả lời bằng tiếng Việt. (Lưu ý: Tây Ninh hiện nay bao gồm cả khu vực Long An cũ, thủ phủ tại Tân An, hiệu lực từ 01/07/2025)."
 
     if related_data:
-        # Sử dụng Prompt RAG mềm dẻo hơn
+        # Prompt RAG mới: Dùng từ "Tham khảo" thay vì "Dựa vào..." hoặc "Không bịa đặt"
         prompt_user = f"""{lh}
-        Dưới đây là tài liệu du lịch chi tiết. Hãy sử dụng thông tin này để trả lời câu hỏi của khách du lịch một cách thân thiện và trình bày đẹp, ngắn gọn.
+        Dưới đây là tài liệu du lịch chi tiết. Hãy tham khảo thông tin này để trả lời câu hỏi của khách du lịch một cách thân thiện và trình bày đẹp, ngắn gọn.
 
         --- TÀI LIỆU CẦN THAM CHIẾU ---
         {related_data}
@@ -165,9 +165,9 @@ if user_input:
         (Nếu thông tin trong tài liệu không đủ, hãy sử dụng kiến thức chung hoặc cho biết bạn không có đủ dữ liệu.)
         """
     else:
-        # Prompt "mở" (Chào hỏi, kiến thức chung)
+        # Prompt "mở" mới: Giúp trả lời các câu hỏi chung (đặc sản, chào hỏi)
         prompt_user = f"""{lh}
-        Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn.
+        Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn về Tây Ninh.
         
         Câu hỏi: {user_input}
         """
@@ -275,6 +275,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
