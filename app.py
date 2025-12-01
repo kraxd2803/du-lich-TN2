@@ -17,7 +17,7 @@ client = genai.Client(
 )
 
 # ======================================
-# DATA FILES (GIỮ LẠI ĐỂ TẢI ẢNH VÀ ĐỊA ĐIỂM)
+# DATA FILES
 # ======================================
 DATA_FILE = "data_tayninh.txt"
 IMAGES_FILE = "images.json"
@@ -77,7 +77,7 @@ def get_weather_simple(lat, lon):
 # STREAMLIT UI
 # ======================================
 st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="🗺️")
-st.title("🗺️ Chatbot Du Lịch Tây Ninh – Gemini Streaming")
+st.title("🗺️ Chatbot Du Lịch Tây Ninh – Ổn định tối đa (Sync)")
 st.caption("Made by Đăng Khoa 🔰 - 1.1")
 
 if "messages" not in st.session_state:
@@ -114,7 +114,7 @@ if user_input:
 
     # Prompt Mở (Chỉ sử dụng kiến thức chung của Gemini)
     prompt_user = f"""{lh}
-    Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn về Tây Ninh và long an cũ(trước khi sáp nhập 2 tỉnh).
+    Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn về Tây Ninh và Long An cũ (trước khi sáp nhập 2 tỉnh).
 
     Câu hỏi: {user_input}
     """
@@ -182,7 +182,7 @@ if user_input:
         for idx, col in enumerate(cols):
             col.image(images[found_place][idx], use_container_width=True)
 
-    # 6. Hiển thị thời tiết (Sử dụng tọa độ Long An/Tân An gần đó)
+    # 6. Hiển thị thời tiết (Sử dụng tọa độ Tân An)
     st.divider()
     cols_weather = st.columns(2)
     # Tọa độ Tân An (thủ phủ mới)
@@ -194,5 +194,3 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tân An (Tây Ninh mới): **{temp}°C**")
-
-
