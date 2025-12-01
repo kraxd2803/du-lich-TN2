@@ -180,27 +180,13 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
 
 
             # -------- Lấy text an toàn --------
-            answer = ""
-            if hasattr(resp, "text") and resp.text:
-                answer = resp.text
-            elif hasattr(resp, "candidates"):
-                try:
-                    parts = resp.candidates[0].content.parts
-                    answer = "".join(p.text for p in parts if hasattr(p, "text"))
-                except:
-                    answer = "⚠️ Không thể đọc phản hồi từ Gemini."
+            try:
+                answer = response.text
+            except:
+                answer = "⚠️ Không thể đọc phản hồi từ Gemini."
 
-            # Nếu Gemini block
-            if not answer:
-                feedback = getattr(resp, "prompt_feedback", None)
-                if feedback and getattr(feedback, "block_reason", None):
-                    st.code(str(resp))
             placeholder.markdown(answer)
 
-        except Exception as e:
-            placeholder.markdown("❌ Lỗi gọi API Gemini.")
-            st.code(str(e))
-            answer = "❌ Lỗi API"
 
     # Lưu vào session
     st.session_state.messages.append({"role": "assistant", "content": answer})
@@ -247,5 +233,6 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
