@@ -81,16 +81,28 @@ def get_weather_simple(lat, lon):
         return None
 
 def clean_rag_data(text):
-    if not text: return ""
-    # 1. Xóa các đường link http/https
-    text = re.sub(r'http\S+', '', text)
-    # 2. Xóa chữ "Link Google Maps:" thừa ra
+    """
+    Làm sạch dữ liệu RAG (Retrieve-Augmented Generation) bằng cách loại bỏ các ký tự 
+    và khoảng trắng/dòng xuống dòng thừa để tạo ra một khối văn bản duy nhất, 
+    giúp Gemini API xử lý hiệu quả hơn.
+    """
+    if not text: 
+        return ""
+    
+    # 1. Xóa các đường link http/https (giữ lại nếu có)
+    # text = re.sub(r'http\S+', '', text) # Bạn có thể bỏ qua bước này nếu muốn giữ lại link
+    
+    # 2. Xóa các chuỗi đặc trưng thừa
     text = text.replace("Link Google Maps:", "")
-    # 3. Xóa khoảng trắng thừa
-    text = text.strip()
-
+    
+    # 3. Thay thế tất cả các ký tự xuống dòng (newlines) bằng một khoảng trắng
     text = text.replace('\n', ' ')
+    
+    # 4. Thay thế tất cả các nhóm ký tự khoảng trắng thừa (tab, nhiều dấu cách, v.v.) 
+    # bằng một dấu cách duy nhất. Đây là bước quan trọng nhất để nén dữ liệu.
     text = re.sub(r'\s+', ' ', text)
+    
+    # 5. Xóa khoảng trắng ở đầu và cuối chuỗi
     return text.strip()
 
 
@@ -258,6 +270,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
