@@ -193,13 +193,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             if not answer:
                 feedback = getattr(resp, "prompt_feedback", None)
                 if feedback and getattr(feedback, "block_reason", None):
-                    answer = (
-                        f"🚫 Gemini từ chối vì lý do an toàn: "
-                        f"{feedback.block_reason.name}"
-                    )
-                else:
-                    answer = "⚠️ Gemini không phản hồi."
-
+                    st.code(str(resp))
             placeholder.markdown(answer)
 
         except Exception as e:
@@ -252,3 +246,4 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
