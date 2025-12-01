@@ -10,12 +10,14 @@ from datetime import datetime
 # CONFIG GEMINI (SDK mới)
 # ======================================
 # Make sure you set st.secrets["gemini_key"] in Streamlit Cloud
+# SỬ DỤNG MÔ HÌNH PRO CHO KIẾN THỨC CHUNG SAU KHI BỎ RAG
+MODEL_NAME = "gemini-2.5-pro" 
 client = genai.Client(
     api_key=st.secrets["gemini_key"],
 )
 
 # ======================================
-# DATA FILES
+# DATA FILES (GIỮ LẠI ĐỂ TẢI ẢNH VÀ ĐỊA ĐIỂM)
 # ======================================
 DATA_FILE = "data_tayninh.txt"
 IMAGES_FILE = "images.json"
@@ -28,25 +30,25 @@ except Exception:
     images = {}
     st.warning("⚠️ Không tìm thấy images.json hoặc JSON không hợp lệ")
 
-# Load dữ liệu du lịch
+# Load dữ liệu du lịch (Vẫn tải dữ liệu để tìm kiếm tên địa điểm cho chức năng ảnh)
+tourism_data = {}
 try:
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         raw_text = f.read()
+    current_key = None
+    for line in raw_text.splitlines():
+        line = line.strip()
+        if line.startswith("###"):
+            # LÀM SẠCH KEY ĐỂ DÙNG TÌM KIẾM ẢNH
+            place = line.replace("###", "").strip() 
+            tourism_data[place] = ""
+            current_key = place
+        elif current_key:
+            tourism_data[current_key] += line + "\n"
+
 except Exception:
     raw_text = ""
     st.error("❌ Không tìm thấy file data_tayninh.txt")
-
-# Chia dữ liệu theo địa điểm (### Tên địa điểm)
-tourism_data = {}
-current_key = None
-for line in raw_text.splitlines():
-    line = line.strip()
-    if line.startswith("###"):
-        place = line.replace("###", "").strip()
-        tourism_data[place] = ""
-        current_key = place
-    elif current_key:
-        tourism_data[current_key] += line + "\n"
 
 # ======================================
 # UTIL FUNCTIONS
@@ -54,19 +56,10 @@ for line in raw_text.splitlines():
 def normalize(text):
     if not text:
         return ""
+    # Chuyển chữ có dấu thành không dấu và làm sạch
     t = unidecode(text.lower())
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return re.sub(r"\s+", " ", t).strip()
-
-def is_new_question(user_msg, last_bot_msg):
-    if not last_bot_msg:
-        return True
-    nm = normalize(user_msg)
-    if len(nm.split()) <= 3:
-        return False
-    if any(x in nm for x in ["tai sao", "o dau", "gio mo cua", "la gi", "du lich", "bao nhieu"]):
-        return True
-    return False
 
 @st.cache_data(ttl=300)
 def get_weather_simple(lat, lon):
@@ -79,32 +72,6 @@ def get_weather_simple(lat, lon):
         return res.json()
     except Exception:
         return None
-
-def clean_rag_data(text):
-    """
-    Làm sạch dữ liệu RAG (Retrieve-Augmented Generation) bằng cách loại bỏ các ký tự 
-    và khoảng trắng/dòng xuống dòng thừa để tạo ra một khối văn bản duy nhất, 
-    giúp Gemini API xử lý hiệu quả hơn.
-    """
-    if not text: 
-        return ""
-    
-    # 1. Xóa các đường link http/https (giữ lại nếu có)
-    # text = re.sub(r'http\S+', '', text) # Bạn có thể bỏ qua bước này nếu muốn giữ lại link
-    
-    # 2. Xóa các chuỗi đặc trưng thừa
-    text = text.replace("Link Google Maps:", "")
-    
-    # 3. Thay thế tất cả các ký tự xuống dòng (newlines) bằng một khoảng trắng
-    text = text.replace('\n', ' ')
-    
-    # 4. Thay thế tất cả các nhóm ký tự khoảng trắng thừa (tab, nhiều dấu cách, v.v.) 
-    # bằng một dấu cách duy nhất. Đây là bước quan trọng nhất để nén dữ liệu.
-    text = re.sub(r'\s+', ' ', text)
-    
-    # 5. Xóa khoảng trắng ở đầu và cuối chuỗi
-    return text.strip()
-
 
 # ======================================
 # STREAMLIT UI
@@ -131,47 +98,27 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # 2. Xử lý RAG và Prompt
-    related_data = ""
+    # 2. Xử lý Prompt (KHÔNG CÓ RAG)
+    found_place = None # Reset cờ tìm kiếm ảnh
+
+    # TÌM KIẾM TÊN ĐỊA ĐIỂM CHỈ ĐỂ HIỂN THỊ ẢNH
     user_norm = normalize(user_input)
-    
-    # Tìm dữ liệu liên quan
     for place in tourism_data:
         place_norm = normalize(place)
         if place_norm in user_norm:
-            raw_data = tourism_data[place]
-            related_data = clean_rag_data(raw_data)
-            if len(related_data) > 3000:
-                related_data = related_data[:3000] + "..."
-            # LƯU TÊN ĐỊA ĐIỂM ĐỂ DÙNG HIỂN THỊ ẢNH
-            found_place = place 
+            found_place = place # LƯU TÊN ĐỊA ĐIỂM ĐỂ DÙNG HIỂN THỊ ẢNH
             break
-    else:
-        found_place = None # Không tìm thấy địa điểm
-
-    # Cấu hình Prompt
+    
+    # Cấu hình Prompt (Vai trò và Bối cảnh sáp nhập)
     lh = "Bạn là hướng dẫn viên du lịch Tây Ninh am hiểu, thân thiện, trả lời bằng tiếng Việt. (Lưu ý: Tây Ninh hiện nay bao gồm cả khu vực Long An cũ, thủ phủ tại Tân An, hiệu lực từ 01/07/2025)."
 
-    if related_data:
-        # Prompt RAG mới: Dùng từ "Tham khảo" thay vì "Dựa vào..." hoặc "Không bịa đặt"
-        prompt_user = f"""{lh}
-        Dưới đây là tài liệu du lịch chi tiết. Hãy tham khảo thông tin này để trả lời câu hỏi của khách du lịch một cách thân thiện và trình bày đẹp, ngắn gọn.
+    # Prompt Mở (Chỉ sử dụng kiến thức chung của Gemini)
+    prompt_user = f"""{lh}
+    Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn về Tây Ninh.
 
-        --- TÀI LIỆU CẦN THAM CHIẾU ---
-        {related_data}
-        ------------------------------
-
-        Câu hỏi của khách: {user_input}
-        (Nếu thông tin trong tài liệu không đủ, hãy sử dụng kiến thức chung hoặc cho biết bạn không có đủ dữ liệu.)
-        """
-    else:
-        # Prompt "mở" mới: Giúp trả lời các câu hỏi chung (đặc sản, chào hỏi)
-        prompt_user = f"""{lh}
-        Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn về Tây Ninh.
-        
-        Câu hỏi: {user_input}
-        """
-
+    Câu hỏi: {user_input}
+    """
+    
     # 3. Gọi Gemini API (Logic lấy text siêu bền vững)
     with st.chat_message("assistant"):
         placeholder = st.empty()
@@ -181,7 +128,7 @@ if user_input:
         try:
             # --- GỌI STREAMING ---
             stream = client.models.generate_content_stream(
-                model="gemini-2.5-pro", 
+                model=MODEL_NAME, 
                 contents=prompt_user,
                 config=gemini_config
             )
@@ -207,11 +154,11 @@ if user_input:
                 raise RuntimeError("Empty Stream") 
 
         except Exception as e_stream:
-            # Nếu Stream lỗi (e.g. Empty Stream) -> Chuyển sang Sync
+            # Nếu Stream lỗi -> Chuyển sang Sync (FALLBACK)
             try:
-                # --- FALLBACK: GỌI SYNC (Dự phòng) ---
+                # --- FALLBACK: GỌI SYNC ---
                 resp = client.models.generate_content(
-                    model="gemini-2.5-pro", 
+                    model=MODEL_NAME, 
                     contents=prompt_user,
                     config=gemini_config
                 )
@@ -264,33 +211,15 @@ if user_input:
         for idx, col in enumerate(cols):
             col.image(images[found_place][idx], use_container_width=True)
 
-    # 6. Hiển thị thời tiết
+    # 6. Hiển thị thời tiết (Sử dụng tọa độ Long An/Tân An gần đó)
     st.divider()
     cols_weather = st.columns(2)
-    lat, lon = 10.5359, 106.4137
+    # Tọa độ Tân An (thủ phủ mới)
+    lat, lon = 10.7788, 106.3533 
     weather = get_weather_simple(lat, lon)
 
     if weather:
         current = weather.get("current_weather", {})
         temp = current.get("temperature", "--")
         with cols_weather[0]:
-            st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            st.info(f"🌤️ Nhiệt độ Tân An (Tây Ninh mới): **{temp}°C**")
