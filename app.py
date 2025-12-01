@@ -114,7 +114,7 @@ if user_input:
 
     # Prompt Mở (Chỉ sử dụng kiến thức chung của Gemini)
     prompt_user = f"""{lh}
-    Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn về Tây Ninh.
+    Hãy trả lời câu hỏi của khách hàng một cách thân thiện, dựa trên kiến thức chung của bạn về Tây Ninh và long an cũ(trước khi sáp nhập 2 tỉnh).
 
     Câu hỏi: {user_input}
     """
@@ -223,3 +223,4 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tân An (Tây Ninh mới): **{temp}°C**")
+
