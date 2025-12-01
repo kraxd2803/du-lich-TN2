@@ -119,85 +119,56 @@ if user_input:
     Câu hỏi: {user_input}
     """
     
-    # 3. Gọi Gemini API (Logic lấy text siêu bền vững)
+    # 3. Gọi Gemini API (Logic chỉ dùng Sync - Ổn định tối đa)
     with st.chat_message("assistant"):
         placeholder = st.empty()
         full_text = ""
         gemini_config = {"max_output_tokens": 1024} 
 
         try:
-            # --- GỌI STREAMING ---
-            stream = client.models.generate_content_stream(
+            # --- GỌI SYNC (Đồng bộ) ---
+            # Sử dụng mô hình PRO để có thông tin chi tiết tốt nhất
+            resp = client.models.generate_content(
                 model=MODEL_NAME, 
                 contents=prompt_user,
                 config=gemini_config
             )
-
-            for chunk in stream:
-                chunk_text = ""
+            
+            # Logic lấy text cho Sync (Deep Extraction)
+            full_text = ""
+            
+            if hasattr(resp, "text") and resp.text:
+                full_text = resp.text
+            
+            elif hasattr(resp, "candidates") and resp.candidates:
                 try:
-                    # Logic lấy text đa tầng (Deep Extraction)
-                    if hasattr(chunk, "text") and chunk.text:
-                        chunk_text = chunk.text
-                    elif hasattr(chunk, "candidates") and chunk.candidates:
-                        parts = chunk.candidates[0].content.parts
-                        chunk_text = "".join([p.text for p in parts if p.text])
-                except Exception:
-                    pass
-                
-                if chunk_text:
-                    full_text += chunk_text
-                    placeholder.markdown(full_text)
-
-            # Kiểm tra cuối cùng: Nếu full_text rỗng sau khi stream kết thúc
-            if not full_text.strip():
-                raise RuntimeError("Empty Stream") 
-
-        except Exception as e_stream:
-            # Nếu Stream lỗi -> Chuyển sang Sync (FALLBACK)
-            try:
-                # --- FALLBACK: GỌI SYNC ---
-                resp = client.models.generate_content(
-                    model=MODEL_NAME, 
-                    contents=prompt_user,
-                    config=gemini_config
-                )
-                
-                # Logic lấy text cho Sync (Deep Extraction)
-                full_text = ""
-                
-                if hasattr(resp, "text") and resp.text:
-                    full_text = resp.text
-                
-                elif hasattr(resp, "candidates") and resp.candidates:
-                    try:
-                        candidate = resp.candidates[0]
-                        if hasattr(candidate, "content") and candidate.content:
-                            parts = getattr(candidate.content, "parts", None) 
-                            if parts and isinstance(parts, list):
-                                full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
-                    except Exception as e_candidate:
-                        full_text = f"🚫 Lỗi truy cập phản hồi: {e_candidate}"
-                
-                # Kiểm tra lỗi chặn sau khi đã cố gắng lấy text
-                if not full_text or full_text.startswith("🚫"):
-                    if hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None:
-                        feedback = resp.prompt_feedback
-                        if hasattr(feedback, "block_reason") and feedback.block_reason is not None:
-                            reason = feedback.block_reason.name
-                            full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({reason})."
-                        elif full_text == "":
-                            full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
+                    candidate = resp.candidates[0]
+                    if hasattr(candidate, "content") and candidate.content:
+                        parts = getattr(candidate.content, "parts", None) 
+                        if parts and isinstance(parts, list):
+                            full_text = "".join([p.text for p in parts if hasattr(p, 'text') and p.text])
+                except Exception as e_candidate:
+                    full_text = f"🚫 Lỗi truy cập phản hồi: {e_candidate}"
+            
+            # Kiểm tra lỗi chặn sau khi đã cố gắng lấy text
+            if not full_text or full_text.startswith("🚫"):
+                if hasattr(resp, "prompt_feedback") and resp.prompt_feedback is not None:
+                    feedback = resp.prompt_feedback
+                    if hasattr(feedback, "block_reason") and feedback.block_reason is not None:
+                        reason = feedback.block_reason.name
+                        full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({reason})."
                     elif full_text == "":
                         full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
+                elif full_text == "":
+                    full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
 
-                placeholder.markdown(full_text)
+            placeholder.markdown(full_text)
 
-            except Exception as e_sync:
-                # Cả Stream và Sync đều lỗi -> Báo lỗi kết nối
-                st.error("❌ Lỗi kết nối API:")
-                st.code(f"Stream Error: {e_stream}\nSync Error: {e_sync}")
-                st.stop()
+        except Exception as e:
+            # Báo lỗi kết nối nếu Sync thất bại
+            st.error("❌ Lỗi kết nối API:")
+            st.code(f"Sync Error: {e}")
+            st.stop()
     
     # 4. Lưu lịch sử
     st.session_state.messages.append({"role": "assistant", "content": full_text})
@@ -223,4 +194,5 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tân An (Tây Ninh mới): **{temp}°C**")
+
 
