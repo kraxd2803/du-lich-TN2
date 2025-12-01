@@ -171,7 +171,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
     # =========================
     with st.chat_message("assistant"):
         placeholder = st.empty()
-        try:
+        try:=
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=user_input
@@ -180,12 +180,12 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
 
 
             # -------- Lấy text an toàn --------
-            try:
-                answer = response.text
-            except:
-                answer = "⚠️ Không thể đọc phản hồi từ Gemini."
+        try:
+            answer = response.text
+        except:
+            answer = "⚠️ Không thể đọc phản hồi từ Gemini."
 
-            placeholder.markdown(answer)
+        placeholder.markdown(answer)
 
 
     # Lưu vào session
@@ -233,6 +233,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
