@@ -87,8 +87,13 @@ def clean_rag_data(text):
     # 2. Xóa chữ "Link Google Maps:" thừa ra
     text = text.replace("Link Google Maps:", "")
     # 3. Xóa khoảng trắng thừa
-    return text.strip()
-    
+    text = text.strip()
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    cleaned_text = " ".join(lines)
+    return cleaned_text
+
+
 # ======================================
 # STREAMLIT UI
 # ======================================
@@ -253,6 +258,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
