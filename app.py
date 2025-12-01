@@ -89,9 +89,9 @@ def clean_rag_data(text):
     # 3. Xóa khoảng trắng thừa
     text = text.strip()
 
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    cleaned_text = " ".join(lines)
-    return cleaned_text
+    text = text.replace('\n', ' ')
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
 
 
 # ======================================
@@ -258,6 +258,7 @@ if user_input:
         temp = current.get("temperature", "--")
         with cols_weather[0]:
             st.info(f"🌤️ Nhiệt độ Tây Ninh: **{temp}°C**")
+
 
 
 
