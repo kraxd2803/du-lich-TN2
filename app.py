@@ -83,8 +83,8 @@ def is_continuation(user_text):
 # ======================================
 # STREAMLIT UI
 # ======================================
-st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="🗺️")
-st.title("🗺️ Chatbot Du Lịch Tây Ninh – Phiên bản 1.2")
+st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="⚡️")
+st.title("⚡️ Chatbot Du Lịch Tây Ninh – Phiên bản 1.2")
 st.caption("Made by Đăng Khoa 🔰 – Phiên bản tối ưu mạnh")
 
 if st.toggle("📄 Hiển thị Hướng dẫn sử dụng"):
@@ -255,6 +255,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
