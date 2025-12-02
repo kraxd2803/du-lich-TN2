@@ -10,7 +10,7 @@ from datetime import datetime
 # CONFIG GEMINI
 # ======================================
 # SỬ DỤNG MÔ HÌNH PRO CHO KIẾN THỨC CHUNG
-MODEL_NAME = "gemini-2.5-pro"
+MODEL_NAME = "gemini-2.5-flash"
 client = genai.Client(
     api_key=st.secrets["gemini_key"],
 )
@@ -257,3 +257,4 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
