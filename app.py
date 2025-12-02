@@ -18,6 +18,7 @@ client = genai.Client(
 # LOAD DATA (TỐI ƯU: CHỈ DÙNG images.json)
 # ======================================
 IMAGES_FILE = "images.json"
+GUIDE_IMAGE_FILE = "huongdan.png"
 
 # Load ảnh và tạo danh sách địa điểm từ key của ảnh
 images = {}
@@ -85,6 +86,13 @@ def is_continuation(user_text):
 st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="🗺️")
 st.title("🗺️ Chatbot Du Lịch Tây Ninh – Phiên bản 1.2")
 st.caption("Made by Đăng Khoa 🔰 – Phiên bản tối ưu mạnh")
+
+if st.toggle("📄 Hiển thị Hướng dẫn sử dụng"):
+    try:
+        st.image(GUIDE_IMAGE_FILE, caption="Hướng dẫn sử dụng Chatbot", use_column_width="auto")
+    except FileNotFoundError:
+        st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{GUIDE_IMAGE_FILE}' đã được đặt cùng thư mục với app.py")
+        
 
 # Nút reset hội thoại
 if st.button("🔄 Reset hội thoại"):
@@ -244,3 +252,4 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
