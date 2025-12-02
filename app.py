@@ -9,43 +9,33 @@ from datetime import datetime
 # ======================================
 # CONFIG GEMINI
 # ======================================
-# SỬ DỤNG MÔ HÌNH PRO CHO KIẾN THỨC CHUNG
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-2.5-pro"
 client = genai.Client(
     api_key=st.secrets["gemini_key"],
 )
 
 # ======================================
-# LOAD DATA
+# LOAD DATA (TỐI ƯU: CHỈ DÙNG images.json)
 # ======================================
-DATA_FILE = "data_tayninh.txt"
 IMAGES_FILE = "images.json"
 
-# Load ảnh
+# Load ảnh và tạo danh sách địa điểm từ key của ảnh
+images = {}
+tourism_data = {}
 try:
     with open(IMAGES_FILE, "r", encoding="utf-8") as f:
         images = json.load(f)
-except Exception:
-    images = {}
-    st.warning("⚠️ Không tìm thấy images.json")
+        
+    # TẠO DANH SÁCH ĐỊA ĐIỂM TỪ KEY CỦA FILE ẢNH
+    # (Dùng để tìm kiếm tên địa điểm trong câu hỏi của User)
+    tourism_data = {place: "" for place in images.keys()} 
 
-# Load file địa điểm (dùng để tìm kiếm ảnh)
-tourism_data = {}
-try:
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        raw_text = f.read()
-    current_key = None
-    for line in raw_text.splitlines():
-        line = line.strip()
-        if line.startswith("###"):
-            # LÀM SẠCH KEY ĐỂ DÙNG TÌM KIẾM ẢNH
-            place = line.replace("###", "").strip()
-            tourism_data[place] = ""
-            current_key = place
-        elif current_key:
-            tourism_data[current_key] += line + "\n"
-except Exception:
-    st.error("❌ Không tìm thấy data_tayninh.txt")
+except Exception as e:
+    images = {}
+    tourism_data = {}
+    st.error(f"❌ Lỗi tải file images.json: {e}") 
+    st.warning("⚠️ Không tìm thấy images.json hoặc JSON không hợp lệ. Tính năng tìm kiếm ảnh bị vô hiệu hóa.")
+
 
 # ======================================
 # UTILITIES
@@ -53,7 +43,6 @@ except Exception:
 def normalize(text):
     if not text:
         return ""
-    # Chuyển chữ có dấu thành không dấu và làm sạch
     t = unidecode(text.lower())
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return re.sub(r"\s+", " ", t).strip()
@@ -129,7 +118,6 @@ if user_input:
     # =========================
     # 2. XÁC ĐỊNH NGỮ CẢNH
     # =========================
-    # Nếu user nói "có", "tiếp", "đúng rồi" → giữ topic cũ
     if is_continuation(user_input) and st.session_state.last_topic:
         intent = st.session_state.last_topic
     else:
@@ -141,7 +129,8 @@ if user_input:
     # =========================
     found_place = None
     user_norm = normalize(user_input)
-    for place in tourism_data:
+    # Lặp qua danh sách địa điểm được tạo từ images.json
+    for place in tourism_data: 
         if normalize(place) in user_norm:
             found_place = place
             break
@@ -150,7 +139,7 @@ if user_input:
     # 4. TẠO PROMPT CHÍNH
     # =========================
     system_role = """
-Bạn là hướng dẫn viên du lịch Tây Ninh thân thiện.
+Bạn là hướng dẫn viên địa lí, lịch sử, du lịch Tây Ninh mới thân thiện.
 Luôn trả lời theo các nguyên tắc:
 - Trình bày gọn, rõ, ưu tiên bullet.
 - Không bịa thông tin.
@@ -174,7 +163,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
     # =========================
     with st.chat_message("assistant"):
         placeholder = st.empty()
-        full_text = "" # Đảm bảo sử dụng biến 'full_text' để lưu trữ
+        full_text = ""
 
         try:
             # GỌI API VỚI PROMPT ĐẦY ĐỦ ('prompt')
@@ -184,11 +173,10 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             )
             
             # -------- Lấy text an toàn --------
-            # Sử dụng logic lấy text từ response
             try:
                 full_text = response.text
                 
-                # Kiểm tra lỗi chặn sau khi đã cố gắng lấy text (Nếu cần)
+                # Kiểm tra lỗi chặn (Nếu cần)
                 if not full_text.strip():
                     if hasattr(response, "prompt_feedback") and response.prompt_feedback is not None:
                         feedback = response.prompt_feedback
@@ -241,7 +229,6 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             rain = hourly.get("precipitation_probability", [])
 
             if times and rain:
-                # Tìm giờ gần nhất
                 now = datetime.now()
                 # Chuyển đổi datetime object có timezone thành aware datetime object
                 diffs = [abs(datetime.fromisoformat(t).replace(tzinfo=None) - now) for t in times]
@@ -257,4 +244,3 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
-
