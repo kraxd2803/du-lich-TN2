@@ -169,9 +169,12 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
     # =========================
     # 5. GỌI GEMINI SYNC (ỔN ĐỊNH TỐI ĐA)
     # =========================
-    with st.chat_message("assistant"):
-        placeholder = st.empty()
-        full_text = ""
+    full_text = ""
+
+    with st.spinner("🤖 Đang suy nghĩ và tổng hợp thông tin..."):
+        
+        # Khởi tạo placeholder để giữ vị trí cho câu trả lời
+        placeholder = st.empty() 
 
         try:
             # GỌI API VỚI PROMPT ĐẦY ĐỦ ('prompt')
@@ -191,18 +194,19 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
                         if hasattr(feedback, "block_reason") and feedback.block_reason is not None:
                             full_text = f"🚫 BỊ CHẶN: Phản hồi vi phạm chính sách an toàn ({feedback.block_reason.name})."
                         else:
-                            full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
+                            full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng)."
                     else:
-                        full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng hoàn toàn)."
+                        full_text = "⚠️ Gemini không phản hồi (Phản hồi rỗng)."
 
             except Exception:
                 full_text = "⚠️ Không thể đọc phản hồi từ Gemini do lỗi nội bộ."
             
+            # Hiển thị câu trả lời (sau khi spinner đã biến mất)
             placeholder.markdown(full_text)
 
         except Exception as e:
             full_text = f"❌ Lỗi kết nối API: {e}"
-            placeholder.error(full_text)
+            st.error(full_text)
             st.stop()
             
     # Lưu vào session
@@ -213,7 +217,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
     # =========================
     if found_place and found_place in images:
         st.divider()
-        st.caption(f"📸 Hình ảnh: {found_place}")
+        st.caption(f"📸 Hình ảnh gợi ý: {found_place}")
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
@@ -238,7 +242,6 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
 
             if times and rain:
                 now = datetime.now()
-                # Chuyển đổi datetime object có timezone thành aware datetime object
                 diffs = [abs(datetime.fromisoformat(t).replace(tzinfo=None) - now) for t in times]
                 idx = diffs.index(min(diffs))
                 prob = rain[idx]
