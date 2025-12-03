@@ -152,8 +152,8 @@ Luôn trả lời theo các nguyên tắc:
 - Trình bày gọn, rõ, ưu tiên bullet.
 - Không bịa thông tin.
 - Nếu không chắc, hãy nói rõ.
-- Ưu tiên dữ liệu liên quan Tây Ninh và Long An cũ.
-- Bối cảnh Tây Ninh và Long An đã sáp nhập, thủ phủ là Tân An.
+- Ưu tiên dữ liệu liên quan Tây Ninh và Long An.
+- Bối cảnh Tây Ninh và Long An đã sáp nhập, trung tâm hành chính - chính trị đặt tại thành phố Tân An.
 - PHẢI SỬ DỤNG DỮ LIỆU KINH TẾ/DÂN SỐ/DIỆN TÍCH ĐƯỢC CUNG CẤP DƯỚI ĐÂY.
 """
     tayninh_data = """
@@ -272,6 +272,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
