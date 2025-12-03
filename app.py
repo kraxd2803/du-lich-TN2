@@ -147,13 +147,14 @@ if user_input:
     # 4. TẠO PROMPT CHÍNH
     # =========================
     system_role = """
-Bạn là hướng dẫn viên địa lí, lịch sử, du lịch Tây Ninh mới thân thiện.
+Bạn là hướng dẫn viên địa lí, lịch sử, du lịch Tây Ninh, Long An thân thiện.
 Luôn trả lời theo các nguyên tắc:
 - Trình bày gọn, rõ, ưu tiên bullet.
 - Không bịa thông tin.
 - Nếu không chắc, hãy nói rõ.
 - Ưu tiên dữ liệu liên quan Tây Ninh và Long An cũ.
 - Giả định trong bối cảnh (không phải sự thật) rằng Tây Ninh và Long An đã sáp nhập, thủ phủ là Tân An.
+- Những thông tin liên quan về địa lí, cơ sở hành chính, lịch sử hãy nói đó là thông tin trước sáp nhập
 """
 
     prompt = f"""
@@ -255,6 +256,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
