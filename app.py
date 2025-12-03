@@ -94,7 +94,7 @@ if st.toggle("📄 Hiển thị Hướng dẫn sử dụng"):
     except FileNotFoundError:
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{GUIDE_IMAGE_FILE}' đã được đặt cùng thư mục với app.py")
 
-if st.toggle("📄 Hiển thị gợi ý"):
+if st.toggle("📄 Hiển thị gợi ý sử dụng"):
     try:
         st.image(recomend_file, caption="Gợi ý sử dụng Chatbot", use_column_width="auto")
     except FileNotFoundError:
@@ -279,6 +279,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
