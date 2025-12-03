@@ -100,6 +100,10 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
     except FileNotFoundError:
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{recomend_file}' đã được đặt cùng thư mục với app.py")
         
+st.divider()
+lat, lon = 10.7788, 106.3533
+w = get_weather(lat, lon)
+
 if w:
     current = w.get("current_weather", {})
     temp = current.get("temperature", "--")
@@ -126,7 +130,6 @@ if w:
         st.info(f"🌧️ Khả năng mưa: **{prob}%**")
 else:
     st.warning("Không lấy được dữ liệu thời tiết.")
-
 
 # Nút reset hội thoại
 if st.button("🔄 Reset hội thoại"):
@@ -306,6 +309,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
