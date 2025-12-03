@@ -99,7 +99,8 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
         st.image(recomend_file, caption="Gợi ý sử dụng Chatbot", use_column_width="auto")
     except FileNotFoundError:
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{recomend_file}' đã được đặt cùng thư mục với app.py")
-        
+
+st.caption("Thời tiết tại Tân An(Trung tâm hành chính - Chính trị)")
 st.divider()
 lat, lon = 10.7788, 106.3533
 w = get_weather(lat, lon)
@@ -275,47 +276,6 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
-
-    # =========================
-    # 7. HIỂN THỊ THỜI TIẾT (Tân An)
-    # =========================
-    st.divider()
-    lat, lon = 10.7788, 106.3533
-    w = get_weather(lat, lon)
-
-    if w:
-        current = w.get("current_weather", {})
-        temp = current.get("temperature", "--")
-
-        # Lấy phần trăm mưa gần nhất
-        prob = "--"
-        try:
-            hourly = w.get("hourly", {})
-            times = hourly.get("time", [])
-            rain = hourly.get("precipitation_probability", [])
-
-            if times and rain:
-                now = datetime.now()
-                diffs = [abs(datetime.fromisoformat(t).replace(tzinfo=None) - now) for t in times]
-                idx = diffs.index(min(diffs))
-                prob = rain[idx]
-        except:
-            pass
-
-        c1, c2 = st.columns(2)
-        with c1:
-            st.info(f"🌤️ Nhiệt độ Tân An: **{temp}°C**")
-        with c2:
-            st.info(f"🌧️ Khả năng mưa: **{prob}%**")
-    else:
-        st.warning("Không lấy được dữ liệu thời tiết.")
-
-
-
-
-
-
-
 
 
 
