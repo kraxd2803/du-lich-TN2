@@ -85,7 +85,7 @@ def is_continuation(user_text):
 # ======================================
 st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="⚡️")
 st.title("⚡️ Chatbot Du Lịch Tây Ninh – Phiên bản 1.2")
-st.caption("Made by Đăng Khoa 🔰 – Phiên bản tối ưu mạnh")
+st.caption("Made by Đăng Khoa 🔰 – Phiên bản tối ưu mạnh 🍀🩵")
 
 if st.toggle("📄 Hiển thị Hướng dẫn sử dụng"):
     try:
@@ -272,6 +272,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
