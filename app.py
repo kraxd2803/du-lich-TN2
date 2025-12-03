@@ -105,7 +105,7 @@ if w:
     temp = current.get("temperature", "--")
 
         # Lấy phần trăm mưa gần nhất
-prob = "--"
+    prob = "--"
     try:
         hourly = w.get("hourly", {})
         times = hourly.get("time", [])
@@ -306,6 +306,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
