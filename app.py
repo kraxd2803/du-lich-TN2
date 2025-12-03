@@ -154,17 +154,33 @@ Luôn trả lời theo các nguyên tắc:
 - Nếu không chắc, hãy nói rõ.
 - Ưu tiên dữ liệu liên quan Tây Ninh và Long An cũ.
 - Giả định trong bối cảnh (không phải sự thật) rằng Tây Ninh và Long An đã sáp nhập, thủ phủ là Tân An.
-- Những thông tin liên quan về địa lí, cơ sở hành chính, lịch sử hãy nói đó là thông tin trước sáp nhập
+- PHẢI SỬ DỤNG DỮ LIỆU KINH TẾ/DÂN SỐ/DIỆN TÍCH ĐƯỢC CUNG CẤP DƯỚI ĐÂY.
+"""
+    tayninh_data = """
+# DỮ LIỆU CƠ BẢN VỀ TỈNH TÂY NINH (GIẢ ĐỊNH SAU KHI SÁP NHẬP VỚI LONG AN)
+- Tây Ninh là một tỉnh thuộc vùng Đông Nam Bộ, Việt Nam và có quy mô kinh tế đứng thứ 10 cả nước, nằm trong Vùng kinh tế trọng điểm phía Nam.
+- Vị trí địa lý: Cầu nối giữa Thành phố Hồ Chí Minh và thủ đô Phnôm Pênh (Campuchia), khu vực chuyển tiếp giữa Đông Nam Bộ với Đồng bằng sông Cửu Long.
+- Phân chia hành chính: Hiện có 96 đơn vị hành chính cấp xã (14 phường và 82 xã).
+- Tổng diện tích: 8.536,44 km2.
+- Dân số (Sau sáp nhập): Khoảng 3.254.170 người (thấp nhất khu vực Đông Nam Bộ).
+- Dữ liệu kinh tế (Theo dữ liệu sáp nhập tỉnh, thành Việt Nam năm 2025):
+  - Diện tích: 8.536 km², xếp thứ 18.
+  - Dân số: 3.254.170 người, xếp thứ 18.
+  - GRDP 2024: 312.456.603 triệu VNĐ, xếp thứ 10.
+  - Thu ngân sách 2024: 39.704.480 triệu VNĐ, xếp thứ 12.
+  - Thu nhập bình quân: 58,54 triệu VNĐ/năm, xếp thứ 16.
+- Giả định bối cảnh: Tây Ninh và Long An đã sáp nhập, thủ phủ là Tân An.
 """
 
     prompt = f"""
 {system_role}
+{tayninh_data}
 
 Ngữ cảnh người dùng đang hỏi thuộc nhóm: **{intent}**
 
 Câu hỏi của người dùng: {user_input}
 
-Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
+Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo ngôn ngữ mà người dùng hỏi.
 """
 
     # =========================
@@ -256,6 +272,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện.
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
