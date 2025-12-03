@@ -100,6 +100,33 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
     except FileNotFoundError:
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{recomend_file}' đã được đặt cùng thư mục với app.py")
         
+if w:
+    current = w.get("current_weather", {})
+    temp = current.get("temperature", "--")
+
+        # Lấy phần trăm mưa gần nhất
+prob = "--"
+    try:
+        hourly = w.get("hourly", {})
+        times = hourly.get("time", [])
+        rain = hourly.get("precipitation_probability", [])
+
+        if times and rain:
+            now = datetime.now()
+            diffs = [abs(datetime.fromisoformat(t).replace(tzinfo=None) - now) for t in times]
+            idx = diffs.index(min(diffs))
+            prob = rain[idx]
+    except:
+        pass
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.info(f"🌤️ Nhiệt độ Tân An: **{temp}°C**")
+    with c2:
+        st.info(f"🌧️ Khả năng mưa: **{prob}%**")
+else:
+    st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 # Nút reset hội thoại
 if st.button("🔄 Reset hội thoại"):
@@ -279,6 +306,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             st.info(f"🌧️ Khả năng mưa: **{prob}%**")
     else:
         st.warning("Không lấy được dữ liệu thời tiết.")
+
 
 
 
