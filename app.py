@@ -123,7 +123,7 @@ if w:
             prob = rain[idx]
     except:
         pass
-    st.caption("Thời tiết tại Tân An(Trung tâm hành chính - Chính trị)")
+    st.caption("Thời tiết tại Tân An (Trung tâm hành chính - Chính trị của tỉnh)")
     c1, c2 = st.columns(2)
     with c1:
         st.info(f"🌤️ Nhiệt độ Tân An: **{temp}°C**")
@@ -276,6 +276,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
