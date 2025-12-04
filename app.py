@@ -86,7 +86,7 @@ def is_continuation(user_text):
 # ======================================
 st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="⚡️")
 st.title("⚡️ Chatbot Du Lịch Tây Ninh – Phiên bản 1.2")
-st.caption("Made by Đăng Khoa 🔰 – Phiên bản tối ưu mạnh 🍀🩵")
+st.caption("Made by Đăng Khoa 🔰 – Phiên bản tối ưu mạnh 🍀")
 
 if st.toggle("📄 Hiển thị Hướng dẫn sử dụng"):
     try:
@@ -100,12 +100,7 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
     except FileNotFoundError:
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{recomend_file}' đã được đặt cùng thư mục với app.py")
 
-st.caption("🎯 Mục tiêu chatbot:
-            Hỗ trợ khách du lịch tìm hiểu thông tin về Tây Ninh
-
-            Cung cấp nội dung 24/7
-
-            Trả lời nhanh, chính xác, thân thiện
+st.caption("🎯⚠️ Giới hạn của chatbot: thông tin có độ chính xác không phải là tuyệt đối nhưng nằm ở mức có thể tham khảo!")
 
             Không thay thế hướng dẫn viên thực tế")
 
@@ -284,6 +279,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
