@@ -6,22 +6,20 @@ import re
 from unidecode import unidecode
 from datetime import datetime
 
-# ======================================
+
 # CONFIG GEMINI
-# ======================================
 MODEL_NAME = "gemini-2.0-flash"
 client = genai.Client(
     api_key=st.secrets["gemini_key"],
 )
 
-# ======================================
-# LOAD DATA (TỐI ƯU: CHỈ DÙNG images.json)
-# ======================================
+
+# LOAD DATA
 IMAGES_FILE = "images.json"
 GUIDE_IMAGE_FILE = "huongdan.png"
 recomend_file="goiy.png"
 
-# Load ảnh và tạo danh sách địa điểm từ key của ảnh
+# Load ảnh và tạo ds địa điểm từ key
 images = {}
 tourism_data = {}
 try:
@@ -29,7 +27,6 @@ try:
         images = json.load(f)
         
     # TẠO DANH SÁCH ĐỊA ĐIỂM TỪ KEY CỦA FILE ẢNH
-    # (Dùng để tìm kiếm tên địa điểm trong câu hỏi của User)
     tourism_data = {place: "" for place in images.keys()} 
 
 except Exception as e:
@@ -39,9 +36,8 @@ except Exception as e:
     st.warning("⚠️ Không tìm thấy images.json hoặc JSON không hợp lệ. Tính năng tìm kiếm ảnh bị vô hiệu hóa.")
 
 
-# ======================================
+
 # UTILITIES
-# ======================================
 def normalize(text):
     if not text:
         return ""
@@ -81,12 +77,11 @@ def is_continuation(user_text):
     return normalize(user_text) in cont
 
 
-# ======================================
 # STREAMLIT UI
-# ======================================
 st.set_page_config(page_title="Chatbot Du Lịch Tây Ninh", page_icon="⚡️")
 st.title("⚡️ Chatbot Du Lịch Tây Ninh – Phiên bản 1.2")
 st.caption("Made by Đăng Khoa 🔰 – Phiên bản tối ưu mạnh 🍀")
+st.caption("🎯⚠️ Giới hạn của chatbot: thông tin có độ chính xác không phải là tuyệt đối nhưng nằm ở mức có thể tham khảo!")
 
 if st.toggle("📄 Hiển thị Hướng dẫn sử dụng"):
     try:
@@ -99,8 +94,6 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
         st.image(recomend_file, caption="Gợi ý sử dụng Chatbot", use_column_width="auto")
     except FileNotFoundError:
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{recomend_file}' đã được đặt cùng thư mục với app.py")
-
-st.caption("🎯⚠️ Giới hạn của chatbot: thông tin có độ chính xác không phải là tuyệt đối nhưng nằm ở mức có thể tham khảo!")
 
 st.divider()
 lat, lon = 10.7788, 106.3533
@@ -133,7 +126,7 @@ if w:
 else:
     st.warning("Không lấy được dữ liệu thời tiết.")
 
-# Nút reset hội thoại
+# Nút reset
 if st.button("🔄 Reset hội thoại"):
     st.session_state.clear()
     st.rerun()
@@ -145,15 +138,15 @@ if "last_topic" not in st.session_state:
     st.session_state.last_topic = None
 
 
-# In lịch sử chat
+# print lịch sử chat
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
 
-# ======================================
-# HANDLE USER INPUT
-# ======================================
+
+# USER INPUT
+
 user_input = st.chat_input("Nhập câu hỏi...")
 
 if user_input:
@@ -162,29 +155,24 @@ if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # =========================
     # 2. XÁC ĐỊNH NGỮ CẢNH
-    # =========================
     if is_continuation(user_input) and st.session_state.last_topic:
         intent = st.session_state.last_topic
     else:
         intent = detect_intent(user_input)
         st.session_state.last_topic = intent
 
-    # =========================
-    # 3. TÌM ĐỊA ĐIỂM -> HIỂN THỊ ẢNH
-    # =========================
+
+    # 3. TÌM PLACE CHO IMAGES
     found_place = None
     user_norm = normalize(user_input)
-    # Lặp qua danh sách địa điểm được tạo từ images.json
     for place in tourism_data: 
         if normalize(place) in user_norm:
             found_place = place
             break
 
-    # =========================
-    # 4. TẠO PROMPT CHÍNH
-    # =========================
+
+    # 4. MAIN PROMPT:>
     system_role = """
 Bạn là hướng dẫn viên địa lí, lịch sử, du lịch Tây Ninh, Long An thân thiện.
 Luôn trả lời theo các nguyên tắc:
@@ -222,9 +210,8 @@ Câu hỏi của người dùng: {user_input}
 Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo ngôn ngữ mà người dùng hỏi.
 """
 
-    # =========================
-    # 5. GỌI GEMINI SYNC (ỔN ĐỊNH TỐI ĐA)
-    # =========================
+
+    # 5. GỌI GEMINI SYNC
     full_text = ""
 
     with st.spinner("🤖 Đang suy nghĩ và tổng hợp thông tin..."):
@@ -239,7 +226,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
                 contents=prompt 
             )
             
-            # -------- Lấy text an toàn --------
+            # Lấy text sàe
             try:
                 full_text = response.text
                 
@@ -265,18 +252,18 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             st.error(full_text)
             st.stop()
             
-    # Lưu vào session
+    # Lưu vào ss
     st.session_state.messages.append({"role": "assistant", "content": full_text})
 
-    # =========================
-    # 6. HIỂN THỊ ẢNH (nếu có)
-    # =========================
+
+    # 6. PRINT IMAGES 
     if found_place and found_place in images:
         st.divider()
         st.caption(f"📸 Hình ảnh gợi ý: {found_place}")
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
