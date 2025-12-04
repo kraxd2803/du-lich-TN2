@@ -102,8 +102,6 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
 
 st.caption("🎯⚠️ Giới hạn của chatbot: thông tin có độ chính xác không phải là tuyệt đối nhưng nằm ở mức có thể tham khảo!")
 
-            Không thay thế hướng dẫn viên thực tế")
-
 st.divider()
 lat, lon = 10.7788, 106.3533
 w = get_weather(lat, lon)
@@ -279,6 +277,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
