@@ -100,6 +100,14 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
     except FileNotFoundError:
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{recomend_file}' đã được đặt cùng thư mục với app.py")
 
+st.caption("🎯 Mục tiêu chatbot:
+            Hỗ trợ khách du lịch tìm hiểu thông tin về Tây Ninh
+
+            Cung cấp nội dung 24/7
+
+            Trả lời nhanh, chính xác, thân thiện
+
+            Không thay thế hướng dẫn viên thực tế")
 
 st.divider()
 lat, lon = 10.7788, 106.3533
@@ -276,6 +284,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
