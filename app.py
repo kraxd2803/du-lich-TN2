@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 # CONFIG GEMINI
-MODEL_NAME = "gemini-2.5-flash-lite"
+MODEL_NAME = "gemma-3-12b"
 client = genai.Client(
     api_key=st.secrets["gemini_key"],
 )
@@ -263,6 +263,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
