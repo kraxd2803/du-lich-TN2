@@ -54,7 +54,7 @@ def get_weather(lat, lon):
         "&current_weather=true&hourly=precipitation_probability&timezone=auto"
     )
     try:
-        res = requests.get(url, timeout=15)
+        res = requests.get(url, timeout=30)
         return res.json()
     except:
         st.warning(f"Weather API error: {e}")
@@ -291,6 +291,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
