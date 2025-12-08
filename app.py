@@ -5,6 +5,7 @@ import json
 import re
 from unidecode import unidecode
 from datetime import datetime
+import time
 
 
 # CONFIG GEMINI
@@ -136,6 +137,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "last_topic" not in st.session_state:
     st.session_state.last_topic = None
+if "request_times" not in st.session_state: 
+    st.session_state.request_times = []
 
 
 # print lịch sử chat
@@ -150,11 +153,35 @@ for msg in st.session_state.messages:
 user_input = st.chat_input("Nhập câu hỏi...")
 
 if user_input:
+    current_time = time.time()
+
+
+    # 1. KTRA RATE LIMIT TÙY CHỈNH (7 RPM)
+    # Lọc bỏ các request đã quá 60 giây (tính từ thời điểm hiện tại)
+    
+    st.session_state.request_times = [
+        t for t in st.session_state.request_times if current_time - t <= 60
+    ]
+    
+    current_count = len(st.session_state.request_times)
+    
+    if current_count >= 7: # Cảnh báo nếu request thứ 8 được gửi trong 60 giây
+        st.warning(
+            "⚠️ **CẢNH BÁO TỐC ĐỘ:** Bạn đã hỏi **quá 5 lần trong 1 phút!** "
+            "Nếu bạn tiếp tục hỏi nhanh, ứng dụng có thể bị lỗi 'Hết Quota' (429)."
+            "Vui lòng chờ một lát rồi thử lại."
+        )
+        # Ngừng xử lý input nếu quá giới hạn 5 RPM
+        st.stop()
+    else:
+        # Nếu chưa quá 8 RPM, thêm timestamp của request hiện tại
+        st.session_state.request_times.append(current_time)
+
     # 1. Hiển thị User chat
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
-
+        
     # 2. XÁC ĐỊNH NGỮ CẢNH
     if is_continuation(user_input) and st.session_state.last_topic:
         intent = st.session_state.last_topic
@@ -263,6 +290,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
