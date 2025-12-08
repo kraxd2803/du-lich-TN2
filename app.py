@@ -47,7 +47,7 @@ def normalize(text):
     return re.sub(r"\s+", " ", t).strip()
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def get_weather(lat, lon):
     url = (
         f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
@@ -291,6 +291,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
