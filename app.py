@@ -98,35 +98,59 @@ if st.toggle("📄 Hiển thị gợi ý sử dụng"):
         st.warning(f"⚠️ KHÔNG TÌM THẤY ẢNH: Vui lòng đảm bảo file ảnh '{recomend_file}' đã được đặt cùng thư mục với app.py")
 
 st.divider()
+st.caption("Thời tiết tại Tân An (Trung tâm hành chính - Chính trị của tỉnh)")
+    
+# Tọa độ Tân An
 lat, lon = 10.7788, 106.3533
 w = get_weather(lat, lon)
 
-if w:
-    current = w.get("current_weather", {})
-    temp = current.get("temperature", "--")
+temp = "--"
+prob = "--"
 
-        # Lấy phần trăm mưa gần nhất
-    prob = "--"
+if w:
     try:
+        # 1. Lấy nhiệt độ hiện tại (current)
+        current = w.get("current_weather", {})
+        temp = current.get("temperature", "--")
+
+        # 2. Lấy phần trăm mưa gần nhất (hourly)
         hourly = w.get("hourly", {})
         times = hourly.get("time", [])
         rain = hourly.get("precipitation_probability", [])
 
         if times and rain:
-            now = datetime.now()
-            diffs = [abs(datetime.fromisoformat(t).replace(tzinfo=None) - now) for t in times]
-            idx = diffs.index(min(diffs))
-            prob = rain[idx]
-    except:
+            now = datetime.now().replace(microsecond=0) # Lấy thời gian hiện tại
+                
+            # Tính khoảng cách thời gian giữa các dự báo và thời điểm hiện tại
+            diffs = []
+            for t in times:
+                try:
+                    # Chuyển đổi và loại bỏ thông tin múi giờ để so sánh an toàn hơn
+                    diffs.append(abs(datetime.fromisoformat(t).replace(tzinfo=None) - now))
+                except:
+                    # Bỏ qua nếu có lỗi định dạng thời gian
+                    pass
+                
+                # Chỉ xử lý nếu tìm thấy ít nhất một mốc thời gian hợp lệ
+            if diffs and min(diffs).total_seconds() < 3600: # Đảm bảo mốc thời gian gần (trong vòng 1 giờ)
+                idx = diffs.index(min(diffs))
+                prob = rain[idx]
+                
+    except Exception as e:
+        # Nếu có bất kỳ lỗi nào trong quá trình xử lý JSON
+        # print(f"Lỗi xử lý thời tiết: {e}") # Có thể dùng để debug nếu có terminal
         pass
-    st.caption("Thời tiết tại Tân An (Trung tâm hành chính - Chính trị của tỉnh)")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.info(f"🌤️ Nhiệt độ Tân An: **{temp}°C**")
-    with c2:
-        st.info(f"🌧️ Khả năng mưa: **{prob}%**")
-else:
-    st.warning("Không lấy được dữ liệu thời tiết.")
+
+c1, c2 = st.columns(2)
+with c1:
+    # Đảm bảo nhiệt độ luôn được hiển thị ở dạng chuỗi, không lỗi nếu là số
+    st.info(f"🌤️ Nhiệt độ Tân An: **{temp}°C**")
+with c2:
+    st.info(f"🌧️ Khả năng mưa: **{prob}%**")
+
+# Nếu cả hai đều không lấy được dữ liệu, đưa ra cảnh báo chung
+if temp == "--" and prob == "--":
+    st.warning("⚠️ Không lấy được dữ liệu thời tiết ổn định (Lỗi kết nối API thời tiết).")")
 
 # Nút reset
 if st.button("🔄 Reset hội thoại"):
@@ -291,6 +315,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
