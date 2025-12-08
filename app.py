@@ -150,7 +150,7 @@ with c2:
 
 # Nếu cả hai đều không lấy được dữ liệu, đưa ra cảnh báo chung
 if temp == "--" and prob == "--":
-    st.warning("⚠️ Không lấy được dữ liệu thời tiết ổn định (Lỗi kết nối API thời tiết).")")
+    st.warning("⚠️ Không lấy được dữ liệu thời tiết ổn định (Lỗi kết nối API thời tiết).")
 
 # Nút reset
 if st.button("🔄 Reset hội thoại"):
@@ -315,6 +315,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
