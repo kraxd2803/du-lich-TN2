@@ -316,6 +316,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
 
+        maps_query = requests.utils.quote(found_place)
         maps_url = f"https://www.google.com/maps/search/?api=1&query={found_place}"
 
         st.link_button(
@@ -323,29 +324,4 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
             url=maps_url,
             help="Nhấn để mở Google Maps và xem đường đi/vị trí"
         )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
