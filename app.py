@@ -75,7 +75,7 @@ def detect_intent(user_text):
 
 def is_continuation(user_text):
     """Nhận biết câu trả lời tiếp theo."""
-    cont = ["đúng rồi", "tiếp", "có", "ok", "tiếp tục", "ừ", "uh"]
+    cont = ["đúng rồi", "tiếp", "có", "ok", "tiếp tục", "ừ", "uh", "đi","thêm nữa"]
     return normalize(user_text) in cont
 
 
@@ -226,7 +226,7 @@ if user_input:
 
     # 4. MAIN PROMPT:>
     system_role = """
-Bạn là hướng dẫn viên địa lí, lịch sử, du lịch Tây Ninh, Long An thân thiện.
+Bạn là hướng dẫn viên địa lí, lịch sử, du lịch tỉnh Tây Ninh và tỉnh Long An.
 Luôn trả lời theo các nguyên tắc:
 - Trình bày gọn, rõ, ưu tiên bullet.
 - Không bịa thông tin.
@@ -315,6 +315,7 @@ Hãy trả lời ngắn gọn, mạch lạc và thân thiện, sử dụng theo 
         cols = st.columns(min(len(images[found_place]), 3))
         for i, col in enumerate(cols):
             col.image(images[found_place][i], use_container_width=True)
+
 
 
 
